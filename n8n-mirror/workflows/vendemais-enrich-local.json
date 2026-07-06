@@ -1,0 +1,147 @@
+{
+  "name": "VendeMais - Lead Enrichment LOCAL (offline, sem custo)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-enrich-local",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "aaaa1111-aaaa-4aaa-aaaa-aaaa11110000",
+      "name": "Trigger Lead (HubSpot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "vendemais-lead-enrich-local",
+      "notes": "Mesmo gatilho do mirror real, mas responde com o resultado do ultimo node (lastNode) pra voce ver o JSON enriquecido no proprio curl."
+    },
+    {
+      "parameters": {
+        "jsCode": "// MOCK do node \"Google Custom Search\" (offline, sem chave/billing).\n// No workflow REAL isto seria um HTTP Request para a Google Custom Search API.\n// Aqui devolvemos resultados canned, na MESMA forma da API (campo \"items\").\nconst body = $json.body || {};\nconst company = body.company || 'Empresa Desconhecida';\nconst deal_id = body.deal_id || 'unknown';\n\nconst items = [\n  { title: `${company} - Sobre`,      link: 'https://exemplo.com/sobre',\n    snippet: `${company} atua em logistica com operacoes no Brasil e LatAm.` },\n  { title: `${company} - Noticias`,   link: 'https://exemplo.com/news',\n    snippet: `${company} captou Serie B e esta expandindo o time de engenharia.` },\n  { title: `${company} - Tecnologia`, link: 'https://exemplo.com/tech',\n    snippet: 'Stack citada publicamente: AWS, Salesforce, HubSpot.' },\n];\n\nreturn [{ json: { deal_id, company, items } }];\n"
+      },
+      "id": "bbbb2222-bbbb-4bbb-bbbb-bbbb22220000",
+      "name": "Google Custom Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "notes": "MOCK offline: devolve resultados canned na forma da Google CSE. Zero chave/billing."
+    },
+    {
+      "parameters": {
+        "jsCode": "// MOCK do node \"OpenAI Analisar Lead\" (offline, sem API key, custo ZERO).\n// No workflow REAL isto chamaria a OpenAI (um modelo GPT pequeno) e devolveria\n// o JSON de enriquecimento. Para plugar o modelo de verdade, troque este\n// Code node por um node OpenAI/HTTP Request apontando pra api.openai.com.\nconst { deal_id, company, items } = $json;\n\n// score deterministico (0-100) derivado do deal_id (so digitos ASCII ->\n// mesmo resultado em qualquer SO/terminal). Parece vivo, mas nao usa rede.\nfunction scoreFrom(seed) {\n  let s = 40;\n  for (const ch of String(seed)) s = (s + ch.charCodeAt(0)) % 101;\n  return Math.max(50, s);\n}\n\nconst enrichment = {\n  industry: 'Logistica',\n  size_employees: '100-500',\n  tech_stack: ['AWS', 'Salesforce', 'HubSpot'],\n  buying_signals: ['captou Serie B', 'expandindo engenharia'],\n  icp_match_score: scoreFrom(deal_id),\n  talking_points: ['Mencionar caso de last-mile', 'Explorar integracao com HubSpot'],\n  _modelo: 'GPT pequeno da OpenAI (MOCK — nenhuma chamada real foi feita)',\n};\n\nreturn [{ json: { deal_id, company_name: company, enrichment, raw_search_results: items } }];\n"
+      },
+      "id": "cccc3333-cccc-4ccc-cccc-cccc33330000",
+      "name": "OpenAI Analisar Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "notes": "MOCK offline: gera o JSON de enriquecimento sem chamar a OpenAI. Modelo real seria um GPT pequeno da OpenAI."
+    },
+    {
+      "parameters": {
+        "jsCode": "// MOCK do node \"Airtable Criar Registro\" (offline, sem PAT).\n// No workflow REAL isto seria Airtable > Append Record. Aqui apenas montamos\n// a linha que SERIA gravada e seguimos em frente (simula sucesso).\nconst { deal_id, company_name, enrichment } = $json;\nconst e = enrichment || {};\n\nconst record = {\n  deal_id,\n  company_name,\n  industry: e.industry,\n  size_employees: e.size_employees,\n  tech_stack: (e.tech_stack || []).join(', '),\n  buying_signals: (e.buying_signals || []).join('; '),\n  icp_match_score: e.icp_match_score,\n  talking_points: (e.talking_points || []).join('; '),\n  enriched_at: new Date().toISOString(),\n};\n\nreturn [{ json: { deal_id, company_name, enrichment: e, airtable_write: 'ok (MOCK)', record } }];\n"
+      },
+      "id": "dddd4444-dddd-4ddd-dddd-dddd44440000",
+      "name": "Airtable Criar Registro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ],
+      "notes": "MOCK offline: monta a linha que seria gravada no Airtable e simula sucesso. Zero PAT."
+    },
+    {
+      "parameters": {
+        "jsCode": "// MOCK do node \"HubSpot Atualizar Deal\" (offline, sem OAuth).\n// No workflow REAL isto seria HubSpot > Update Deal (grava o icp_match_score\n// no card do deal). Como e o ULTIMO node e o webhook responde com \"lastNode\",\n// este JSON e o que volta no corpo da resposta do curl.\nconst { deal_id, enrichment } = $json;\nconst e = enrichment || {};\n\nreturn [{ json: {\n  status: 'enriched',\n  hubspot_update: 'ok (MOCK)',\n  deal_id,\n  icp_match_score: e.icp_match_score,\n  industry: e.industry,\n  message: `Deal ${deal_id} enriquecido offline (sem custo). Score ICP = ${e.icp_match_score}.`,\n} }];\n"
+      },
+      "id": "eeee5555-eeee-4eee-eeee-eeee55550000",
+      "name": "HubSpot Atualizar Deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ],
+      "notes": "MOCK offline: simula o update do deal no HubSpot. Ultimo node -> volta no corpo do curl."
+    }
+  ],
+  "connections": {
+    "Trigger Lead (HubSpot)": {
+      "main": [
+        [
+          {
+            "node": "Google Custom Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Custom Search": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Analisar Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Analisar Lead": {
+      "main": [
+        [
+          {
+            "node": "Airtable Criar Registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Criar Registro": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Atualizar Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "versionId": "v0.0.1-local",
+  "id": "vendemais-lead-enrich-local",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "notes": "Versao 100% OFFLINE do mirror. Os 4 nodes de servico externo (Google/OpenAI/Airtable/HubSpot) viraram Code nodes mockados -> roda verde SEM nenhuma credencial ou ferramenta paga. Use pra estudar o fluxo; a versao real e vendemais-enrich-v0.json."
+  },
+  "tags": [
+    {
+      "name": "mirror",
+      "id": "1"
+    },
+    {
+      "name": "offline",
+      "id": "3"
+    }
+  ]
+}

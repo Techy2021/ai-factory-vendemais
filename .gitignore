@@ -1,0 +1,31 @@
+# Env (nunca comitar credencial)
+.env
+.env.local
+*.env.backup
+
+# n8n (mirror local)
+.n8n/
+n8n_data/
+
+# Python (testes / scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs / backups locais
+*.log
+logs/
+*.bkp
+
+# NOTA: blueprints versionados ficam em /workflows/ e /n8n-mirror/workflows/
+#       — NAO sao ignorados (esse e o ponto do versionamento).

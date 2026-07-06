@@ -1,0 +1,250 @@
+{
+  "name": "VendeMais — Lead Enrichment via LLM (v0.3-joana)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "hubspotcrm:watchDeals",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": 0,
+        "limit": 100,
+        "watchBy": "updatedDate"
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "Joana HubSpot Personal (PESSOAL — MIGRAR p/ conta corporativa)",
+              "data": { "scoped": "false", "connection": "hubspotcrm" }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:hubspotcrm",
+            "label": "Connection",
+            "required": true
+          }
+        ],
+        "expect": [
+          { "name": "watchBy", "type": "select", "label": "Watch Deals by" },
+          { "name": "limit", "type": "uinteger", "label": "Limit" }
+        ],
+        "advanced": true,
+        "note": "Filter dealstage = appointmentscheduled. Schedule era 15min, hoje OFF (Cláudia desligou no fim do ano passado) — roda manual via Run once.",
+        "scheduling": {
+          "type": "indefinitely",
+          "interval": 900,
+          "status": "off"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "google-cse:search",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": 0
+      },
+      "mapper": {
+        "cx": "017576662512468239146:omuauf_lfve",
+        "q": "{{1.properties.company}} headquarters employees revenue technology stack",
+        "num": 5,
+        "safe": "off",
+        "lr": "lang_pt"
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "Joana Google Custom Search API (key/billing PESSOAIS)",
+              "data": { "scoped": "false", "connection": "google-cse" }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:google-cse",
+            "label": "Connection",
+            "required": true
+          }
+        ],
+        "expect": [
+          { "name": "q", "type": "text", "label": "Query" },
+          { "name": "cx", "type": "text", "label": "Search engine ID" },
+          { "name": "num", "type": "uinteger", "label": "Number of results" }
+        ],
+        "note": "Sem truncamento dos snippets — vão gigantes pro OpenAI e estouram tokens."
+      }
+    },
+    {
+      "id": 3,
+      "module": "openai-gpt-3:createChatCompletion",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": 0
+      },
+      "mapper": {
+        "model": "gpt-5.4-mini",
+        "temperature": "0.3",
+        "max_tokens": "1500",
+        "response_format": { "type": "json_object" },
+        "messages": [
+          {
+            "role": "system",
+            "content": "Você é um analista de inteligência de vendas B2B. Sempre responde em JSON válido, sem texto antes ou depois."
+          },
+          {
+            "role": "user",
+            "content": "Você é um analista de inteligência de vendas. Recebeu o nome da empresa: {{1.properties.company}} e os resultados de busca: {{3.items}}. Retorne em JSON:\n{\n  \"industry\": \"...\",\n  \"size_employees\": \"...\",\n  \"tech_stack\": [...],\n  \"buying_signals\": [...],\n  \"icp_match_score\": 0-100,\n  \"talking_points\": [...]\n}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "Joana OpenAI Personal (sk-... no cartão PESSOAL — URGENTE trocar)",
+              "data": { "scoped": "false", "connection": "openai-gpt-3" }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:openai-gpt-3",
+            "label": "Connection",
+            "required": true
+          }
+        ],
+        "expect": [
+          { "name": "model", "type": "select", "label": "Model" },
+          { "name": "temperature", "type": "number", "label": "Temperature" },
+          { "name": "max_tokens", "type": "uinteger", "label": "Max tokens" },
+          { "name": "messages", "type": "array", "label": "Messages" }
+        ],
+        "note": "Sem error handling: se a OpenAI devolve JSON quebrado o cenário morre silencioso. Alternativa: Anthropic Claude (módulo anthropic:createMessage)."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 0
+      },
+      "mapper": {
+        "base": "appXXXXXXXXXX",
+        "table": "Lead Enrichment",
+        "record": {
+          "deal_id": "{{1.id}}",
+          "company_name": "{{1.properties.company}}",
+          "industry": "{{3.choices[].message.content.industry}}",
+          "size_employees": "{{3.choices[].message.content.size_employees}}",
+          "tech_stack": "{{join(3.choices[].message.content.tech_stack; \",\")}}",
+          "buying_signals": "{{3.choices[].message.content.buying_signals}}",
+          "icp_match_score": "{{3.choices[].message.content.icp_match_score}}",
+          "talking_points": "{{3.choices[].message.content.talking_points}}",
+          "enriched_at": "{{now}}",
+          "raw_search_results": "{{toString(2.items)}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "Joana Airtable PAT (token pessoal, base corporativa)",
+              "data": { "scoped": "false", "connection": "airtable" }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:airtable",
+            "label": "Connection",
+            "required": true
+          }
+        ],
+        "expect": [
+          { "name": "base", "type": "text", "label": "Base" },
+          { "name": "table", "type": "text", "label": "Table" }
+        ],
+        "note": "Sem dedup por deal_id — re-enriquecimento cria linha duplicada. tech_stack (Multiple select) explode opções. Falta JSON Parse explícito do choices[0].message.content."
+      }
+    },
+    {
+      "id": 5,
+      "module": "hubspotcrm:updateDeal",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": 0
+      },
+      "mapper": {
+        "dealId": "{{1.id}}",
+        "properties": {
+          "icp_match_score": "{{3.choices[].message.content.icp_match_score}}",
+          "enrichment_industry": "{{3.choices[].message.content.industry}}",
+          "enrichment_last_run": "{{now}}",
+          "enrichment_status": "enriched"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "Joana HubSpot Personal (mesma conexão do trigger)",
+              "data": { "scoped": "false", "connection": "hubspotcrm" }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:hubspotcrm",
+            "label": "Connection",
+            "required": true
+          }
+        ],
+        "expect": [
+          { "name": "dealId", "type": "text", "label": "Deal ID" }
+        ],
+        "note": "Sem branch de falha: se módulo 3 morre, enrichment_status fica eterno em 'pending' (nunca vira 'failed')."
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": [
+      "Esqueleto reconstruído a partir de make-blueprint-pseudo.txt + screenshots (Joana não exportou o blueprint limpo antes de sair).",
+      "LIMITAÇÃO MAKE: conexões (__IMTCONN__) NÃO exportam no JSON. Ao importar, reconfigure HubSpot OAuth, Google CSE, OpenAI e Airtable PAT na mão.",
+      "Workspace original: Joana Personal (joana@vendemais.com) — PRECISA MIGRAR p/ conta corporativa.",
+      "Plano Make Free: 1.000 ops/mês — já estoura. Subir p/ Starter no orçamento aprovado."
+    ]
+  }
+}

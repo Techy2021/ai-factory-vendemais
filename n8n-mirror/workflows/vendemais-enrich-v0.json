@@ -1,0 +1,199 @@
+{
+  "name": "VendeMais - Lead Enrichment v0 (mirror n8n)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-enrich",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "11111111-aaaa-4aaa-aaaa-111111111111",
+      "name": "Trigger Lead (HubSpot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "vendemais-lead-enrich",
+      "notes": "Espelha o HubSpot Watch Deals (dealstage=appointmentscheduled). No Make era poll de 15min, hoje OFF -> aqui voce dispara manual via curl (mesma realidade: roda na mao)."
+    },
+    {
+      "parameters": {
+        "requestMethod": "GET",
+        "url": "https://www.googleapis.com/customsearch/v1",
+        "responseFormat": "json",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "q",
+              "value": "={{$json[\"body\"][\"company\"]}} headquarters employees revenue technology stack"
+            },
+            {
+              "name": "cx",
+              "value": "017576662512468239146:omuauf_lfve"
+            },
+            {
+              "name": "key",
+              "value": "COLOQUE_GOOGLE_CSE_KEY_AQUI"
+            },
+            {
+              "name": "num",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "id": "22222222-bbbb-4bbb-bbbb-222222222222",
+      "name": "Google Custom Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "notes": "Sem node nativo confiavel -> HTTP Request. Free tier 100 queries/dia. Snippets NAO sao truncados (divida de custo)."
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": "gpt-5.4-mini",
+        "apiKey": "sk-EXEMPLO-PESSOAL-JOANA-NAO-USAR-EM-PROD-9z8y7x6w5v4u3t2s1r0q",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Você é um analista de inteligência de vendas B2B. Sempre responde em JSON válido, sem texto antes ou depois."
+            },
+            {
+              "role": "user",
+              "content": "=Você é um analista de inteligência de vendas. Recebeu o nome da empresa: {{$node[\"Trigger Lead (HubSpot)\"].json[\"body\"][\"company\"]}} e os resultados de busca: {{JSON.stringify($json[\"items\"])}}. Retorne em JSON:\n{\n  \"industry\": \"...\",\n  \"size_employees\": \"...\",\n  \"tech_stack\": [...],\n  \"buying_signals\": [...],\n  \"icp_match_score\": 0-100,\n  \"talking_points\": [...]\n}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1500,
+          "timeout": 30000
+        }
+      },
+      "id": "33333333-cccc-4ccc-cccc-333333333333",
+      "name": "OpenAI Analisar Lead",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [720, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "Joana OpenAI Personal (rotacionar!)"
+        }
+      },
+      "notes": "Sem JSON Parse com tratamento de erro: se a OpenAI devolve JSON quebrado, o fluxo morre silencioso. Alternativa Anthropic: trocar por HTTP Request -> api.anthropic.com/v1/messages."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "application": "appXXXXXXXXXX",
+        "table": "Lead Enrichment",
+        "options": {},
+        "addAllFields": false,
+        "fields": [
+          "deal_id",
+          "company_name",
+          "industry",
+          "size_employees",
+          "tech_stack",
+          "buying_signals",
+          "icp_match_score",
+          "talking_points",
+          "enriched_at",
+          "raw_search_results"
+        ]
+      },
+      "id": "44444444-dddd-4ddd-dddd-444444444444",
+      "name": "Airtable Criar Registro",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [960, 300],
+      "credentials": {
+        "airtableApi": {
+          "id": "2",
+          "name": "Joana Airtable PAT (pessoal)"
+        }
+      },
+      "notes": "Sem dedup por deal_id -> linhas duplicadas. tech_stack como Multiple select explode opcoes. Sem campo cost_usd."
+    },
+    {
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{$node[\"Trigger Lead (HubSpot)\"].json[\"body\"][\"deal_id\"]}}",
+        "updateFields": {
+          "icp_match_score": "={{$node[\"OpenAI Analisar Lead\"].json[\"message\"][\"content\"][\"icp_match_score\"]}}",
+          "enrichment_industry": "={{$node[\"OpenAI Analisar Lead\"].json[\"message\"][\"content\"][\"industry\"]}}",
+          "enrichment_last_run": "={{$now}}",
+          "enrichment_status": "enriched"
+        }
+      },
+      "id": "55555555-eeee-4eee-eeee-555555555555",
+      "name": "HubSpot Atualizar Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 1,
+      "position": [1200, 300],
+      "credentials": {
+        "hubspotApi": {
+          "id": "3",
+          "name": "Joana HubSpot Personal"
+        }
+      },
+      "notes": "Sem branch de falha: se OpenAI quebra, enrichment_status fica eterno em 'pending', nunca vira 'failed'."
+    }
+  ],
+  "connections": {
+    "Trigger Lead (HubSpot)": {
+      "main": [
+        [
+          { "node": "Google Custom Search", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Google Custom Search": {
+      "main": [
+        [
+          { "node": "OpenAI Analisar Lead", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "OpenAI Analisar Lead": {
+      "main": [
+        [
+          { "node": "Airtable Criar Registro", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Airtable Criar Registro": {
+      "main": [
+        [
+          { "node": "HubSpot Atualizar Deal", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "versionId": "v0.0.1-mirror",
+  "id": "vendemais-lead-enrich",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "owner": "joana@vendemais.com",
+    "notes": "Mirror n8n do cenario Make. Mesmos 5 passos. Webhook substitui o trigger HubSpot p/ ser testavel via curl sem credenciais. active=false (scheduler OFF herdado)."
+  },
+  "tags": [
+    { "name": "mirror", "id": "1" },
+    { "name": "revops", "id": "2" }
+  ]
+}

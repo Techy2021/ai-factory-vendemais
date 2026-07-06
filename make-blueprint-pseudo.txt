@@ -1,0 +1,74 @@
+==========================================================================
+PSEUDO-BLUEPRINT — Cenário Make.com "Lead Enrichment via LLM"
+Autora original: Joana M. (estagiária, durou um semestre)
+Status: 🟡 esqueleto — blueprint real não foi exportado antes da saída
+==========================================================================
+
+SCENARIO: Lead Enrichment via LLM
+WORKSPACE: Joana Personal (joana@vendemais.com) — PRECISA MIGRAR
+PLAN: Make Free (limite 1.000 operations/mês — já estoura)
+TRIGGER: HubSpot > Watch Deals
+  Filter: dealstage = "appointmentscheduled"
+  Frequency: every 15 min
+  Schedule status: OFF (desligado no fim do ano passado)
+
+--------------------------------------------------------------------------
+MODULE 1: HubSpot > Watch Deals
+  Connection: Joana HubSpot Personal (pessoal!)
+  Output: { id, properties.company, properties.dealname, properties.amount, ... }
+
+MODULE 2: Google Search > Search
+  Connection: Joana Google CSE Personal (billing pessoal!)
+  Query: "{{1.properties.company}} headquarters employees revenue technology stack"
+  Results: top 5 (array de {title, link, snippet})
+
+MODULE 3: OpenAI > Create a Chat Completion
+  Connection: Joana OpenAI Personal (sk-... no cartão pessoal!)
+  Model: (um modelo GPT pequeno da OpenAI)
+  Temperature: 0.3
+  Max tokens: 1500
+  Response format: json_object
+  System: "Você é um analista de inteligência de vendas B2B..."
+  User: <ver screenshot-03-openai-prompt.md — prompt integral>
+  Output: JSON parseado com industry, size_employees, tech_stack[],
+          buying_signals[], icp_match_score, talking_points[]
+
+MODULE 3.5: (implícito) JSON Parse
+  Parseia choices[0].message.content (string) → objeto
+
+MODULE 4: Airtable > Create a Record
+  Connection: Joana Airtable PAT (token pessoal, base corporativa)
+  Base: VendeMais CRM
+  Table: Lead Enrichment
+  Fields: deal_id, company_name, industry, size_employees, tech_stack,
+          buying_signals, icp_match_score, talking_points,
+          enriched_at, raw_search_results
+
+MODULE 5: HubSpot > Update a Deal
+  Connection: Joana HubSpot Personal
+  Deal ID: {{1.id}}
+  Update properties:
+    - icp_match_score
+    - enrichment_industry
+    - enrichment_last_run
+    - enrichment_status = "enriched"
+
+--------------------------------------------------------------------------
+ERROR HANDLING: nenhum (Joana não configurou!)
+  - se OpenAI devolve JSON quebrado → cenário morre silenciosamente
+  - se Google CSE estoura quota → cenário morre
+  - se HubSpot rate limit → cenário morre
+
+RETRY: padrão Make (3x com backoff)
+
+SCHEDULE: era 15min, hoje OFF, roda manual via "Run once"
+
+LOG/ALERTA: nenhum (sem Slack notification, sem e-mail)
+
+CONEXÕES (NÃO EXPORTAM no blueprint JSON — limitação Make!):
+  [1] HubSpot OAuth — pessoal
+  [2] Google CSE API key — pessoal
+  [3] OpenAI API key — pessoal
+  [4] Airtable PAT — pessoal
+
+==========================================================================
