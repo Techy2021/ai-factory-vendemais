@@ -1,5 +1,12 @@
 # Changelog
 
+## [etapa-1]
+- Incluída a auditoria do protótipo.
+- Incluída a matriz de decisão de stack.
+- Incluídos o ADR-001 (escolha da stack) e o ADR-002 (ambiente de produção).
+- Incluídos os diagramas C4 de nível 1 (contexto) e nível 2 (containers).
+- Adicionadas no README as referências aos documentos da Etapa 1.
+
 ## [v0.4-handoff] (RevOps, herdando da Joana)
 - Reconstruído o **blueprint Make.com importável** (`workflows/vendemais-make-blueprint.json`) a partir do pseudo-blueprint + screenshots. 5 módulos.
 - Adicionado **mirror n8n** auto-hospedável (`n8n-mirror/`: docker-compose + workflow + README) para testar o mesmo fluxo localmente.

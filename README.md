@@ -39,6 +39,15 @@ vendemais-lead-enrich/
 > testar de verdade só com ele. O `n8n-mirror/` reproduz os mesmos 5 passos em n8n
 > (auto-hospedável via Docker) pra você conseguir importar, disparar e inspecionar o fluxo.
 
+## Documentação da Etapa 1
+
+- [Auditoria do protótipo](docs/auditoria-prototipo.md)
+- [Matriz de decisão de stack](docs/matriz-decisao-stack.md)
+- [ADR-001 — Escolha da stack](docs/adr/ADR-001-escolha-da-stack.md)
+- [ADR-002 — Ambiente de produção](docs/adr/ADR-002-ambiente-de-producao.md)
+- [C4 — Nível 1: Contexto](docs/architecture/c4-contexto.md)
+- [C4 — Nível 2: Containers](docs/architecture/c4-containers.md)
+
 ## Como importar / rodar — Make.com (produção)
 
 1. Abra o Make.com na **conta corporativa** da VendeMais (não na minha pessoal!).
