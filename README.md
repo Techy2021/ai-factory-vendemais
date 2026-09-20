@@ -47,6 +47,7 @@ vendemais-lead-enrich/
 - [ADR-002 — Ambiente de produção](docs/adr/ADR-002-ambiente-de-producao.md)
 - [C4 — Nível 1: Contexto](docs/architecture/c4-contexto.md)
 - [C4 — Nível 2: Containers](docs/architecture/c4-containers.md)
+- [Smoke tests — Etapa 1](docs/smoke-tests.md)
 
 ## Como importar / rodar — Make.com (produção)
 
