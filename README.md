@@ -1,133 +1,109 @@
-# Lead Enrichment VendeMais — passagem de bastão da Joana
+# VendeMais ? Enriquecimento de leads
 
-Oi! Sou a Joana 👋
+O VendeMais apoia o time comercial na qualifica??o de oportunidades B2B. O projeto consulta informa??es p?blicas sobre empresas, usa um LLM para gerar dados de enriquecimento, registra o resultado no Airtable e atualiza o score de ader?ncia ao perfil de cliente ideal (`icp_match_score`) no HubSpot.
 
-Esse era meu projeto de estágio na VendeMais (durou um semestre). Foi pra produção no fim daquele semestre e tá rodando — bom, *tava* rodando, agora eu acho que a Cláudia desligou porque saiu do meu controle quando eu fui embora.
+## Fluxo final da Etapa 1
 
-## O que é
+**HubSpot ? Brave Search ? Gemini ? JSON ? Airtable ? HubSpot**
 
-Um cenário no **Make.com** (Stack C) que:
+O [blueprint versionado](workflows/vendemais-make-blueprint.json) cont?m seis m?dulos:
 
-1. Observa novos deals no HubSpot que entram em `appointmentscheduled`
-2. Pesquisa a empresa no Google Search
-3. Manda resultados pro OpenAI (um modelo GPT pequeno) gerar um JSON com industry, tech stack, ICP score etc.
-4. Grava o resultado numa tabela do Airtable
-5. Atualiza o deal no HubSpot com o `icp_match_score`
+1. **HubSpot:** observa neg?cios atualizados no est?gio `appointmentscheduled`.
+2. **Brave Search:** consulta informa??es sobre a empresa por HTTP.
+3. **Gemini:** analisa os dados e gera a resposta de enriquecimento.
+4. **JSON:** faz o parsing da resposta para disponibilizar os campos aos pr?ximos m?dulos.
+5. **Airtable:** cria um registro com os dados enriquecidos.
+6. **HubSpot:** atualiza o neg?cio com o `icp_match_score`.
 
-São **5 módulos** em linha: HubSpot → Google → OpenAI → Airtable → HubSpot.
+## Arquitetura e documenta??o
 
-## O que tem nessa pasta agora
+A arquitetura escolhida ? a **Stack C**, baseada em servi?os SaaS e integra??es de baixo c?digo. O **Make ? o ambiente escolhido para produ??o**, com contas e credenciais corporativas. O n8n permanece como apoio para testes locais e aprendizado.
 
+- [Auditoria do prot?tipo](docs/auditoria-prototipo.md)
+- [Matriz de decis?o de stack](docs/matriz-decisao-stack.md)
+- [ADR-001 ? Escolha da stack](docs/adr/ADR-001-escolha-da-stack.md)
+- [ADR-002 ? Ambiente de produ??o](docs/adr/ADR-002-ambiente-de-producao.md)
+- [C4 ? Contexto](docs/architecture/c4-contexto.md)
+- [C4 ? Containers](docs/architecture/c4-containers.md)
+- [Schema do Airtable](docs/airtable-schema.md)
+- [Smoke tests da Etapa 1](docs/smoke-tests.md)
+
+A auditoria, o contexto do ADR-001, os diagramas C4 e o mirror n8n ainda cont?m refer?ncias ao prot?tipo com Google Search/OpenAI. A decis?o de usar Make permanece v?lida, mas essas refer?ncias aos provedores precisam ser atualizadas para refletir Brave Search/Gemini. Para o fluxo implementado, consulte o blueprint versionado e a sequ?ncia descrita acima.
+
+## Executar e testar
+
+### Testes locais
+
+Na raiz do reposit?rio, com Python 3.11 ou compat?vel, execute:
+
+```bash
+python tests/validate_workflows.py
+python tests/test_enrichment_logic.py
 ```
-vendemais-lead-enrich/
-├── workflows/
-│   └── vendemais-make-blueprint.json   ← blueprint Make.com IMPORTÁVEL (reconstruí do pseudo + screenshots)
-├── n8n-mirror/                         ← espelho do MESMO fluxo em n8n (roda local p/ testar de verdade)
-│   ├── docker-compose.yml
-│   ├── workflows/vendemais-enrich-v0.json     ← mirror REAL (precisa de credenciais)
-│   ├── workflows/vendemais-enrich-local.json  ← versão OFFLINE (roda verde sem custo)
-│   └── README.md
-├── tests/
-│   ├── validate_workflows.py           ← valida estrutura dos 2 JSON
-│   └── test_enrichment_logic.py        ← lógica do prompt + parsing do fit-score (LLM mockado)
-├── docs/                               ← schema Airtable, notas, screenshots (texto)
-├── make-blueprint-pseudo.txt
-├── BRIEFING.md  ·  CHANGELOG.md  ·  .env.example  ·  .gitignore
-```
 
-> **Por que dois artefatos?** O Make.com é SaaS, **não roda local** — então não dá pra
-> testar de verdade só com ele. O `n8n-mirror/` reproduz os mesmos 5 passos em n8n
-> (auto-hospedável via Docker) pra você conseguir importar, disparar e inspecionar o fluxo.
+Os scripts usam a biblioteca padr?o e n?o exigem credenciais nem chamadas externas. S?o 10 verifica??es estruturais dos artefatos Make/n8n e 5 verifica??es de l?gica com LLM simulado, incluindo montagem do prompt, parsing do score e rejei??o de JSON inv?lido. As 15 verifica??es passaram na revis?o desta entrega.
 
-## Documentação da Etapa 1
+Os [smoke tests documentados](docs/smoke-tests.md) cobrem estrutura do blueprint, conex?es do mirror e leitura de um resultado simulado. Esses testes n?o comprovam a execu??o real do Gemini, a integra??o entre os servi?os ou o sucesso do deploy.
 
-- [Auditoria do protótipo](docs/auditoria-prototipo.md)
-- [Matriz de decisão de stack](docs/matriz-decisao-stack.md)
-- [ADR-001 — Escolha da stack](docs/adr/ADR-001-escolha-da-stack.md)
-- [ADR-002 — Ambiente de produção](docs/adr/ADR-002-ambiente-de-producao.md)
-- [C4 — Nível 1: Contexto](docs/architecture/c4-contexto.md)
-- [C4 — Nível 2: Containers](docs/architecture/c4-containers.md)
-- [Smoke tests — Etapa 1](docs/smoke-tests.md)
+### Teste no Make
 
-## Como importar / rodar — Make.com (produção)
+1. Use o ambiente corporativo do Make e importe [workflows/vendemais-make-blueprint.json](workflows/vendemais-make-blueprint.json) em um cen?rio de teste.
+2. Configure ou remapeie as conex?es do HubSpot, Gemini e Airtable. Revise a base, a tabela e os campos de destino: refer?ncias exportadas n?o garantem acesso no novo ambiente.
+3. Para importa??o manual, configure a chave Brave Search diretamente no m?dulo HTTP do Make, substituindo o placeholder `BRAVE_SEARCH_API_KEY` apenas no cen?rio. N?o grave a chave no arquivo versionado.
+4. Com o agendamento desativado durante o teste, prepare um neg?cio de teste no est?gio esperado e execute **Run once**.
+5. Confira a execu??o dos seis m?dulos, o JSON interpretado, o registro criado no Airtable e o score atualizado no HubSpot. Esse teste usa APIs reais e grava dados nos sistemas conectados.
 
-1. Abra o Make.com na **conta corporativa** da VendeMais (não na minha pessoal!).
-2. **Create a new scenario → ⋯ (mais opções) → Import Blueprint**.
-3. Suba `workflows/vendemais-make-blueprint.json`.
-4. **Reconfigure as conexões na mão** — elas **não vêm** no JSON (limitação do Make):
-   HubSpot OAuth, Google CSE, OpenAI API key e Airtable PAT. No blueprint cada módulo
-   está com `__IMTCONN__: 0` (desconectado) de propósito.
-5. O scheduler está **OFF** no blueprint. Pra testar uma vez: **Run once**.
+A ativa??o e o agendamento devem ser conferidos no Make; o blueprint local n?o comprova o estado atual do cen?rio remoto.
 
-## Como importar / rodar — mirror n8n (teste local)
+### Apoio local com n8n
+
+Com Docker e Docker Compose instalados:
 
 ```bash
 cd n8n-mirror
-docker compose up -d          # sobe o n8n em http://localhost:5678
+docker compose up -d
 ```
 
-Depois: importe `n8n-mirror/workflows/vendemais-enrich-v0.json` pelo menu **Import from File**,
-configure credenciais nos nodes, ative o workflow e dispare:
+Abra `http://localhost:5678` e importe `n8n-mirror/workflows/vendemais-enrich-local.json`, selecionando o arquivo a partir da raiz do reposit?rio. Essa vers?o usa servi?os simulados e permite exercitar o fluxo sem credenciais externas. Consulte o [guia do mirror](n8n-mirror/README.md) para disparar o webhook e inspecionar a execu??o.
 
-```bash
-curl -X POST http://localhost:5678/webhook/lead-enrich \
-  -H "Content-Type: application/json" \
-  -d '{"deal_id": "9876543210", "company": "Acme Logística SA"}'
-```
+O mirror conserva a estrutura do prot?tipo anterior; n?o valida a integra??o atual Brave Search/Gemini.
 
-Passo a passo completo em [`n8n-mirror/README.md`](n8n-mirror/README.md).
+## CI com GitHub Actions
 
-## Como rodar os testes (não chamam API nenhuma)
+O workflow [ci.yml](.github/workflows/ci.yml) executa os dois scripts de teste em pushes e pull requests, usando Python 3.11. Falhas nos scripts fazem o job falhar. A CI verifica os artefatos e a l?gica local, sem acessar as APIs de produ??o.
 
-```bash
-python tests/validate_workflows.py      # estrutura dos 2 JSON
-python tests/test_enrichment_logic.py   # prompt + parsing do fit-score (LLM mockado)
-```
+## CD com GitHub Actions e Make API
 
-## Sobre o LLM
+O workflow [cd-make.yml](.github/workflows/cd-make.yml) atualiza um cen?rio existente no Make. Ele ? acionado por altera??es no blueprint enviadas ? branch `main` ou manualmente por **Actions ? CD Make ? Run workflow**.
 
-Hoje é **um modelo GPT pequeno da OpenAI** (`temperature 0.3`, `max_tokens 1500`, `response_format: json_object`).
-Dá pra trocar por **Anthropic Claude** sem mudar a arquitetura: no Make use o módulo
-`anthropic:createMessage`; no n8n troque o node OpenAI por um **HTTP Request** batendo em
-`https://api.anthropic.com/v1/messages` (mesmo system/user prompt). O JSON de saída é o mesmo.
+Configure em **Settings ? Secrets and variables ? Actions**:
 
-## Dívida técnica herdada
+| Tipo | Nome | Uso |
+| --- | --- | --- |
+| Secret | `MAKE_API_KEY` | Autentica??o da API Make para leitura e atualiza??o do cen?rio. |
+| Secret | `BRAVE_SEARCH_API_KEY` | Substitui??o do placeholder da busca durante o deploy. |
+| Variable | `MAKE_SCENARIO_ID` | Identifica??o do cen?rio de destino, sem publicar seu valor na documenta??o. |
+| Variable | `MAKE_REGION` | Regi?o do ambiente Make: `eu1`, `eu2`, `us1` ou `us2`. |
 
-Coisas que ficaram **propositalmente sem resolver** (é o que vocês vão corrigir no curso).
-Estão aqui, marcadas, pra ninguém ser pego de surpresa. **Não "arrumei" nada disso** —
-detalhes e ordem de urgência em [`docs/notas-joana.md`](docs/notas-joana.md).
+As demais credenciais de integra??o s?o configuradas nas conex?es do Make. N?o inclua chaves ou tokens no README, no blueprint ou nos logs.
 
-1. **Scheduler OFF / roda manual.** No Make o trigger era poll de 15min, hoje desligado;
-   alguém clica "Run once" todo dia. No mirror n8n o workflow vem `active: false` e você
-   dispara via curl. Mesma realidade: nada roda sozinho.
-2. **API key pessoal da Joana.** OpenAI no meu cartão (~US$ 18/mês), Google CSE no meu
-   billing, Airtable PAT meu. No mirror tem até uma chave de exemplo *hardcoded* no JSON
-   (não é real, mas mostra o anti-padrão). Tudo precisa virar conta corporativa.
-3. **Zero tratamento de erro.** Se a OpenAI devolve JSON quebrado, o cenário morre
-   silencioso (já aconteceu ~3x). Sem branch de falha, sem retry custom, sem alerta no Slack.
-4. **Sem versionamento Git originalmente.** Foi tudo clicado no Make. Não havia export do
-   blueprint nem histórico — esse repo é o primeiro passo pra mudar isso.
-5. **Sem instrumentação de custo.** Não tem campo `cost_usd` no Airtable nem cálculo de
-   tokens por execução. Prompts estouram 8k tokens (snippets do Google não são truncados).
-   Impossível auditar custo por lead hoje.
-6. **Sem mapa LGPD de transferência internacional.** Dados de empresa-cliente passam por
-   Google + OpenAI nos EUA. Levantei a bandeira pro jurídico, nunca responderam.
-7. **Schema Airtable problemático.** `tech_stack` como *Multiple select* explode opções
-   (400+, duplicadas), sem unique constraint em `deal_id` (gera linhas duplicadas),
-   `raw_search_results` pesado (~80% da quota). Ver [`docs/airtable-schema.md`](docs/airtable-schema.md).
+O CD l? o blueprint local e substitui o placeholder Brave Search **somente em mem?ria**. Antes do envio, consulta `GET /scenarios/{id}/blueprint` e valida a estrutura remota, aceitando objeto ou string JSON. Em seguida, faz um ?nico `PATCH /scenarios/{id}`, com o campo `blueprint` serializado como string JSON dentro do corpo JSON da requisi??o.
 
-## Avisos importantes (por favor lê isso)
+O workflow n?o imprime o payload nem o corpo das respostas de erro. Em falhas, informa o status HTTP e, quando dispon?veis, o diagn?stico 1010 e o identificador `CF-Ray`. N?o h? retry autom?tico. Em caso de timeout ap?s o PATCH, confira o cen?rio no Make antes de repetir.
 
-- O cenário Make tá no **meu espaço pessoal** (`joana@vendemais.com`). Vão precisar
-  **migrar pra conta corporativa** — o Make não migra workspace, vocês recriam/importam blueprint.
-- As **conexões não saem** no blueprint JSON do Make (tem que reconfigurar OAuth/PAT na mão).
-- Anexei **screenshots descritos em texto** em `docs/cenario-make-screenshots/` e o
-  **pseudo-blueprint** em `make-blueprint-pseudo.txt` (foi a base do JSON real).
+CI e CD s?o workflows independentes: o CD atual n?o aguarda automaticamente a conclus?o da CI. Confira os testes antes de disparar o deploy. O CD atualiza o blueprint; n?o executa o cen?rio nem configura seu agendamento.
 
-## Se travarem
+## Status da Etapa 1
 
-Me chama no LinkedIn (Joana M.), respondo quando puder. Tô em Lisboa fazendo mestrado, fuso +4h.
+- Objetivo, decis?o de stack, ambiente de produ??o, ADRs, diagramas C4 e smoke tests est?o documentados, com a defasagem dos provedores indicada acima.
+- O blueprint dos seis m?dulos est? versionado com o fluxo Brave Search/Gemini.
+- Os 15 testes locais passaram e a CI foi executada com sucesso no GitHub Actions.
+- O CD Make foi executado com sucesso pela branch `main`, com credenciais via GitHub Secrets, serialização do blueprint e validação de erros.
+- O blueprint foi sincronizado pela Make API e o cenário foi verificado no Make após o deploy, com os seis módulos e os principais mapeamentos preservados.
+- **Pendente de evid?ncia:** execu??o integrada do fluxo final e confirma??o do agendamento em produ??o. Os testes locais n?o substituem essa valida??o.
 
-Boa sorte! O projeto é bem legal, os AEs amam o score. 💛
+O reposit?rio re?ne os artefatos da Etapa 1 e registra as limita??es conhecidas. A opera??o em produ??o n?o deve ser considerada homologada apenas com base nos testes locais.
 
-— Joana
+## D?vida t?cnica herdada
+
+A [auditoria](docs/auditoria-prototipo.md) e as [notas do prot?tipo](docs/notas-joana.md) registram pontos de evolu??o, como tratamento de falhas, acompanhamento de custos, duplicidade de registros e governan?a de dados. Esses documentos s?o hist?ricos; a exist?ncia de testes e pipelines n?o comprova a resolu??o de todas essas pend?ncias.
