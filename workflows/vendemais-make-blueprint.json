@@ -1,250 +1,2675 @@
 {
-  "name": "VendeMais — Lead Enrichment via LLM (v0.3-joana)",
-  "flow": [
-    {
-      "id": 1,
-      "module": "hubspotcrm:watchDeals",
-      "version": 1,
-      "parameters": {
-        "__IMTCONN__": 0,
-        "limit": 100,
-        "watchBy": "updatedDate"
-      },
-      "mapper": {},
-      "metadata": {
-        "designer": { "x": 0, "y": 0 },
-        "restore": {
-          "parameters": {
-            "__IMTCONN__": {
-              "label": "Joana HubSpot Personal (PESSOAL — MIGRAR p/ conta corporativa)",
-              "data": { "scoped": "false", "connection": "hubspotcrm" }
+    "name": "VendeMais — Lead Enrichment via LLM (v0.3-joana)",
+    "flow": [
+        {
+            "id": 6,
+            "module": "hubspotcrm:WatchCRMObjects",
+            "version": 2,
+            "parameters": {
+                "limit": 100,
+                "query": "",
+                "filter": [
+                    [
+                        {
+                            "a": "dealstage",
+                            "b": "appointmentscheduled",
+                            "o": "EQ"
+                        }
+                    ]
+                ],
+                "objectType": "deals",
+                "__IMTCONN__": 11206890,
+                "watchPattern": "updated",
+                "outputProperties": [],
+                "parseCustomFields": true
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "6f218f1df2361a12"
+                },
+                "restore": {
+                    "parameters": {
+                        "objectType": {
+                            "mode": "chose",
+                            "label": "Deals"
+                        },
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "HubSpot corporate connection"
+                        },
+                        "watchPattern": {
+                            "label": "Updated (Modified)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit",
+                        "required": true
+                    },
+                    {
+                        "name": "objectType",
+                        "type": "select",
+                        "label": "Object Type to Search",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "contacts",
+                                "companies",
+                                "deals",
+                                "products",
+                                "tickets",
+                                "line_items"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    },
+                    {
+                        "name": "outputProperties",
+                        "type": "select",
+                        "label": "Output Properties",
+                        "multiple": true
+                    },
+                    {
+                        "name": "watchPattern",
+                        "type": "select",
+                        "label": "Watch Created/Updated",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "created",
+                                "updated"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "type": "text",
+                        "label": "Query"
+                    },
+                    {
+                        "name": "filter",
+                        "type": "filter",
+                        "label": "Filter search results",
+                        "options": {
+                            "store": [
+                                {
+                                    "label": "Associated Companies",
+                                    "value": "associations.company"
+                                },
+                                {
+                                    "label": "Associated Contacts",
+                                    "value": "associations.contact"
+                                },
+                                {
+                                    "label": "Associated Tickets",
+                                    "value": "associations.ticket"
+                                },
+                                {
+                                    "label": "Actual Duration",
+                                    "value": "hs_actual_duration"
+                                },
+                                {
+                                    "label": "All Deal Notification Recipients",
+                                    "value": "hs_user_ids_of_all_notification_recipients"
+                                },
+                                {
+                                    "label": "Amount",
+                                    "value": "amount"
+                                },
+                                {
+                                    "label": "Amount In Company Currency",
+                                    "value": "amount_in_home_currency"
+                                },
+                                {
+                                    "label": "Annual Contract Value",
+                                    "value": "hs_acv"
+                                },
+                                {
+                                    "label": "Annual Recurring Revenue",
+                                    "value": "hs_arr"
+                                },
+                                {
+                                    "label": "Associated Shared Deal Product Interests",
+                                    "value": "hs_associated_deal_registration_product_interests"
+                                },
+                                {
+                                    "label": "Associated Shared Deal Type",
+                                    "value": "hs_associated_deal_registration_deal_type"
+                                },
+                                {
+                                    "label": "Average Deal Owner Duration In Current Stage",
+                                    "value": "hs_average_deal_owner_duration_in_current_stage"
+                                },
+                                {
+                                    "label": "Brands",
+                                    "value": "hs_all_assigned_business_unit_ids"
+                                },
+                                {
+                                    "label": "Campaign Of Last Booking In Meetings Tool",
+                                    "value": "engagements_last_meeting_booked_campaign"
+                                },
+                                {
+                                    "label": "Close Date",
+                                    "value": "closedate"
+                                },
+                                {
+                                    "label": "Closed Lost Reason",
+                                    "value": "closed_lost_reason"
+                                },
+                                {
+                                    "label": "Closed Won Count",
+                                    "value": "hs_closed_won_count"
+                                },
+                                {
+                                    "label": "Closed Won Reason",
+                                    "value": "closed_won_reason"
+                                },
+                                {
+                                    "label": "Create Date",
+                                    "value": "createdate"
+                                },
+                                {
+                                    "label": "Created By User ID",
+                                    "value": "hs_created_by_user_id"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Appointment Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_appointmentscheduled"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Closed Lost (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_closedlost"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Closed Won (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_closedwon"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Contract Sent (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_contractsent"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Decision Maker Bought-In (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_decisionmakerboughtin"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Presentation Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_presentationscheduled"
+                                },
+                                {
+                                    "label": "Cumulative Time In \"Qualified To Buy (Sales Pipeline)\"",
+                                    "value": "hs_v2_cumulative_time_in_qualifiedtobuy"
+                                },
+                                {
+                                    "label": "Currency",
+                                    "value": "deal_currency_code"
+                                },
+                                {
+                                    "label": "Date Entered \"Appointment Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_appointmentscheduled"
+                                },
+                                {
+                                    "label": "Date Entered \"Closed Lost (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_closedlost"
+                                },
+                                {
+                                    "label": "Date Entered \"Closed Won (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_closedwon"
+                                },
+                                {
+                                    "label": "Date Entered \"Contract Sent (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_contractsent"
+                                },
+                                {
+                                    "label": "Date Entered \"Decision Maker Bought-In (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_decisionmakerboughtin"
+                                },
+                                {
+                                    "label": "Date Entered \"Presentation Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_presentationscheduled"
+                                },
+                                {
+                                    "label": "Date Entered \"Qualified To Buy (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_entered_qualifiedtobuy"
+                                },
+                                {
+                                    "label": "Date Entered Current Stage",
+                                    "value": "hs_v2_date_entered_current_stage"
+                                },
+                                {
+                                    "label": "Date Exited \"Appointment Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_appointmentscheduled"
+                                },
+                                {
+                                    "label": "Date Exited \"Closed Lost (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_closedlost"
+                                },
+                                {
+                                    "label": "Date Exited \"Closed Won (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_closedwon"
+                                },
+                                {
+                                    "label": "Date Exited \"Contract Sent (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_contractsent"
+                                },
+                                {
+                                    "label": "Date Exited \"Decision Maker Bought-In (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_decisionmakerboughtin"
+                                },
+                                {
+                                    "label": "Date Exited \"Presentation Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_presentationscheduled"
+                                },
+                                {
+                                    "label": "Date Exited \"Qualified To Buy (Sales Pipeline)\"",
+                                    "value": "hs_v2_date_exited_qualifiedtobuy"
+                                },
+                                {
+                                    "label": "Date Of Last Meeting Booked In Meetings Tool",
+                                    "value": "engagements_last_meeting_booked"
+                                },
+                                {
+                                    "label": "Days To Close",
+                                    "value": "days_to_close"
+                                },
+                                {
+                                    "label": "Deal Collaborator",
+                                    "value": "hs_all_collaborator_owner_ids"
+                                },
+                                {
+                                    "label": "Deal Description",
+                                    "value": "description"
+                                },
+                                {
+                                    "label": "Deal Name",
+                                    "value": "dealname"
+                                },
+                                {
+                                    "label": "Deal Owner",
+                                    "value": "hubspot_owner_id"
+                                },
+                                {
+                                    "label": "Deal Probability",
+                                    "value": "hs_deal_stage_probability"
+                                },
+                                {
+                                    "label": "Deal Score",
+                                    "value": "hs_deal_score"
+                                },
+                                {
+                                    "label": "Deal Split Added",
+                                    "value": "hs_is_deal_split"
+                                },
+                                {
+                                    "label": "Deal Split Users",
+                                    "value": "hs_all_deal_split_owner_ids"
+                                },
+                                {
+                                    "label": "Deal Stage",
+                                    "value": "dealstage"
+                                },
+                                {
+                                    "label": "Deal Tags",
+                                    "value": "hs_tag_ids"
+                                },
+                                {
+                                    "label": "Deal Type",
+                                    "value": "dealtype"
+                                },
+                                {
+                                    "label": "Exchange Rate",
+                                    "value": "hs_exchange_rate"
+                                },
+                                {
+                                    "label": "Forecast Amount",
+                                    "value": "hs_forecast_amount"
+                                },
+                                {
+                                    "label": "Forecast Category",
+                                    "value": "hs_manual_forecast_category"
+                                },
+                                {
+                                    "label": "Forecast Probability",
+                                    "value": "hs_forecast_probability"
+                                },
+                                {
+                                    "label": "Form ID",
+                                    "value": "hs_form_id"
+                                },
+                                {
+                                    "label": "Has Last Conversation Follow Ups",
+                                    "value": "hs_has_last_conversation_follow_ups"
+                                },
+                                {
+                                    "label": "Has Last Meeting Follow Ups",
+                                    "value": "hs_has_last_meeting_followups"
+                                },
+                                {
+                                    "label": "HubSpot Sales Lead",
+                                    "value": "hs_synced_deal_owner_name_and_email"
+                                },
+                                {
+                                    "label": "HubSpot Shared Deal MRR",
+                                    "value": "hs_deal_registration_mrr"
+                                },
+                                {
+                                    "label": "HubSpot Shared Deal MRR Currency Code",
+                                    "value": "hs_deal_registration_mrr_currency_code"
+                                },
+                                {
+                                    "label": "HubSpot Team",
+                                    "value": "hubspot_team_id"
+                                },
+                                {
+                                    "label": "Is Active Shared Deal",
+                                    "value": "hs_is_active_shared_deal"
+                                },
+                                {
+                                    "label": "Is Closed (numeric)",
+                                    "value": "hs_is_closed_count"
+                                },
+                                {
+                                    "label": "Is Closed Lost",
+                                    "value": "hs_is_closed_lost"
+                                },
+                                {
+                                    "label": "Is Closed Won",
+                                    "value": "hs_is_closed_won"
+                                },
+                                {
+                                    "label": "Is Deal Closed?",
+                                    "value": "hs_is_closed"
+                                },
+                                {
+                                    "label": "Is Open (numeric)",
+                                    "value": "hs_is_open_count"
+                                },
+                                {
+                                    "label": "Is Stalled",
+                                    "value": "hs_is_stalled"
+                                },
+                                {
+                                    "label": "Is Stalled After Timestamp",
+                                    "value": "hs_is_stalled_after_timestamp"
+                                },
+                                {
+                                    "label": "Last Activity Date",
+                                    "value": "notes_last_updated"
+                                },
+                                {
+                                    "label": "Last Contacted",
+                                    "value": "notes_last_contacted"
+                                },
+                                {
+                                    "label": "Last Conversation With Follow-ups",
+                                    "value": "hs_last_conversation_with_followups_object_coordinates"
+                                },
+                                {
+                                    "label": "Last Email With Follow-ups",
+                                    "value": "hs_last_email_with_followups_object_coordinates"
+                                },
+                                {
+                                    "label": "Last GS Shared Message",
+                                    "value": "hs_last_gs_shared_message"
+                                },
+                                {
+                                    "label": "Last Modified Date",
+                                    "value": "hs_lastmodifieddate"
+                                },
+                                {
+                                    "label": "Last Partner Shared Message Date",
+                                    "value": "hs_last_partner_shared_message_date"
+                                },
+                                {
+                                    "label": "Latest Approval Status",
+                                    "value": "hs_latest_approval_status"
+                                },
+                                {
+                                    "label": "Latest Time In \"Appointment Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_appointmentscheduled"
+                                },
+                                {
+                                    "label": "Latest Time In \"Closed Lost (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_closedlost"
+                                },
+                                {
+                                    "label": "Latest Time In \"Closed Won (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_closedwon"
+                                },
+                                {
+                                    "label": "Latest Time In \"Contract Sent (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_contractsent"
+                                },
+                                {
+                                    "label": "Latest Time In \"Decision Maker Bought-In (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_decisionmakerboughtin"
+                                },
+                                {
+                                    "label": "Latest Time In \"Presentation Scheduled (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_presentationscheduled"
+                                },
+                                {
+                                    "label": "Latest Time In \"Qualified To Buy (Sales Pipeline)\"",
+                                    "value": "hs_v2_latest_time_in_qualifiedtobuy"
+                                },
+                                {
+                                    "label": "Latest Traffic Source",
+                                    "value": "hs_analytics_latest_source"
+                                },
+                                {
+                                    "label": "Latest Traffic Source Data 1",
+                                    "value": "hs_analytics_latest_source_data_1"
+                                },
+                                {
+                                    "label": "Latest Traffic Source Data 2",
+                                    "value": "hs_analytics_latest_source_data_2"
+                                },
+                                {
+                                    "label": "Latest Traffic Source Timestamp",
+                                    "value": "hs_analytics_latest_source_timestamp"
+                                },
+                                {
+                                    "label": "Medium Of Last Booking In Meetings Tool",
+                                    "value": "engagements_last_meeting_booked_medium"
+                                },
+                                {
+                                    "label": "Merged Deal IDs",
+                                    "value": "hs_merged_object_ids"
+                                },
+                                {
+                                    "label": "Monthly Recurring Revenue",
+                                    "value": "hs_mrr"
+                                },
+                                {
+                                    "label": "Next Activity",
+                                    "value": "hs_notes_next_activity"
+                                },
+                                {
+                                    "label": "Next Activity Date",
+                                    "value": "notes_next_activity_date"
+                                },
+                                {
+                                    "label": "Next Meeting",
+                                    "value": "hs_next_meeting_id"
+                                },
+                                {
+                                    "label": "Next Meeting Name",
+                                    "value": "hs_next_meeting_name"
+                                },
+                                {
+                                    "label": "Next Meeting Start Time",
+                                    "value": "hs_next_meeting_start_time"
+                                },
+                                {
+                                    "label": "Next Step",
+                                    "value": "hs_next_step"
+                                },
+                                {
+                                    "label": "Number Of Active Deal Registrations",
+                                    "value": "hs_num_associated_active_deal_registrations"
+                                },
+                                {
+                                    "label": "Number Of Associated Contacts",
+                                    "value": "num_associated_contacts"
+                                },
+                                {
+                                    "label": "Number Of Associated Line Items",
+                                    "value": "hs_num_of_associated_line_items"
+                                },
+                                {
+                                    "label": "Number Of Deal Registrations",
+                                    "value": "hs_num_associated_deal_registrations"
+                                },
+                                {
+                                    "label": "Number Of Sales Activities",
+                                    "value": "num_notes"
+                                },
+                                {
+                                    "label": "Number Of Times Contacted",
+                                    "value": "num_contacted_notes"
+                                },
+                                {
+                                    "label": "Original Traffic Source",
+                                    "value": "hs_analytics_source"
+                                },
+                                {
+                                    "label": "Original Traffic Source Drill-Down 1",
+                                    "value": "hs_analytics_source_data_1"
+                                },
+                                {
+                                    "label": "Original Traffic Source Drill-Down 2",
+                                    "value": "hs_analytics_source_data_2"
+                                },
+                                {
+                                    "label": "Owner Assigned Date",
+                                    "value": "hubspot_owner_assigneddate"
+                                },
+                                {
+                                    "label": "Partner Tech Win",
+                                    "value": "hs_partner_tech_win"
+                                },
+                                {
+                                    "label": "Pipeline",
+                                    "value": "pipeline"
+                                },
+                                {
+                                    "label": "Priority",
+                                    "value": "hs_priority"
+                                },
+                                {
+                                    "label": "Record ID",
+                                    "value": "hs_object_id"
+                                },
+                                {
+                                    "label": "Record Source",
+                                    "value": "hs_object_source_label"
+                                },
+                                {
+                                    "label": "Record Source Detail 1",
+                                    "value": "hs_object_source_detail_1"
+                                },
+                                {
+                                    "label": "Record Source Detail 2",
+                                    "value": "hs_object_source_detail_2"
+                                },
+                                {
+                                    "label": "Record Source Detail 3",
+                                    "value": "hs_object_source_detail_3"
+                                },
+                                {
+                                    "label": "Shared Teams",
+                                    "value": "hs_shared_team_ids"
+                                },
+                                {
+                                    "label": "Shared Users",
+                                    "value": "hs_shared_user_ids"
+                                },
+                                {
+                                    "label": "Source Of Last Booking In Meetings Tool",
+                                    "value": "engagements_last_meeting_booked_source"
+                                },
+                                {
+                                    "label": "Time In Current Stage",
+                                    "value": "hs_v2_time_in_current_stage"
+                                },
+                                {
+                                    "label": "Total Contract Value",
+                                    "value": "hs_tcv"
+                                },
+                                {
+                                    "label": "Updated By User ID",
+                                    "value": "hs_updated_by_user_id"
+                                },
+                                {
+                                    "label": "Weighted Amount",
+                                    "value": "hs_projected_amount"
+                                },
+                                {
+                                    "label": "Weighted Amount In Company Currency",
+                                    "value": "hs_projected_amount_in_home_currency"
+                                },
+                                {
+                                    "label": "Weighted Open Pipeline In Company Currency",
+                                    "value": "hs_weighted_pipeline_in_company_currency"
+                                }
+                            ],
+                            "operators": [
+                                {
+                                    "label": "Operators",
+                                    "options": [
+                                        {
+                                            "label": "Equal to",
+                                            "value": "EQ"
+                                        },
+                                        {
+                                            "label": "Not Equal to",
+                                            "value": "NEQ"
+                                        },
+                                        {
+                                            "label": "Less Than",
+                                            "value": "LT"
+                                        },
+                                        {
+                                            "label": "Less Than or Equal to",
+                                            "value": "LTE"
+                                        },
+                                        {
+                                            "label": "Greater Than",
+                                            "value": "GT"
+                                        },
+                                        {
+                                            "label": "Greater Than or Equal to",
+                                            "value": "GTE"
+                                        },
+                                        {
+                                            "label": "Contains Token",
+                                            "value": "CONTAINS_TOKEN"
+                                        },
+                                        {
+                                            "label": "Does Not Contain Token",
+                                            "value": "NOT_CONTAINS_TOKEN"
+                                        },
+                                        {
+                                            "label": "Has Property Value",
+                                            "value": "HAS_PROPERTY"
+                                        },
+                                        {
+                                            "label": "Does Not Have Property Value",
+                                            "value": "NOT_HAS_PROPERTY"
+                                        },
+                                        {
+                                            "label": "between (provide an array of 2 values)",
+                                            "value": "BETWEEN"
+                                        },
+                                        {
+                                            "label": "in (provide an array of values)",
+                                            "value": "IN"
+                                        },
+                                        {
+                                            "label": "not in (provide an array of values)",
+                                            "value": "NOT_IN"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "id",
+                        "type": "uinteger",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdAt",
+                        "type": "date",
+                        "label": "Created at"
+                    },
+                    {
+                        "name": "updatedAt",
+                        "type": "date",
+                        "label": "Updated at"
+                    },
+                    {
+                        "name": "properties",
+                        "spec": [
+                            {
+                                "name": "hs_actual_duration",
+                                "type": "number",
+                                "label": "Actual duration"
+                            },
+                            {
+                                "name": "hs_user_ids_of_all_notification_recipients",
+                                "type": "text",
+                                "label": "All deal notification recipients"
+                            },
+                            {
+                                "name": "hs_all_owner_ids",
+                                "type": "text",
+                                "label": "All owner IDs"
+                            },
+                            {
+                                "name": "hs_all_team_ids",
+                                "type": "text",
+                                "label": "All team IDs"
+                            },
+                            {
+                                "name": "hs_all_accessible_team_ids",
+                                "type": "text",
+                                "label": "All teams"
+                            },
+                            {
+                                "name": "amount",
+                                "type": "number",
+                                "label": "Amount"
+                            },
+                            {
+                                "name": "amount_in_home_currency",
+                                "type": "number",
+                                "label": "Amount in company currency"
+                            },
+                            {
+                                "name": "hs_acv",
+                                "type": "number",
+                                "label": "Annual contract value"
+                            },
+                            {
+                                "name": "hs_arr",
+                                "type": "number",
+                                "label": "Annual recurring revenue"
+                            },
+                            {
+                                "name": "hs_associated_deal_registration_product_interests",
+                                "type": "text",
+                                "label": "Associated Shared Deal Product Interests"
+                            },
+                            {
+                                "name": "hs_associated_deal_registration_deal_type",
+                                "type": "text",
+                                "label": "Associated Shared Deal Type"
+                            },
+                            {
+                                "name": "hs_attributed_team_ids",
+                                "type": "text",
+                                "label": "Attributed reporting team"
+                            },
+                            {
+                                "name": "hs_average_deal_owner_duration_in_current_stage",
+                                "type": "number",
+                                "label": "Average Deal Owner Duration In Current Stage"
+                            },
+                            {
+                                "name": "hs_average_call_duration",
+                                "type": "number",
+                                "label": "Average call duration"
+                            },
+                            {
+                                "name": "hs_all_assigned_business_unit_ids",
+                                "type": "text",
+                                "label": "Brands"
+                            },
+                            {
+                                "name": "engagements_last_meeting_booked_campaign",
+                                "type": "text",
+                                "label": "Campaign of last booking in meetings tool"
+                            },
+                            {
+                                "name": "closedate",
+                                "type": "date",
+                                "label": "Close Date"
+                            },
+                            {
+                                "name": "hs_closed_amount",
+                                "type": "number",
+                                "label": "Closed Deal Amount"
+                            },
+                            {
+                                "name": "hs_closed_deal_close_date",
+                                "type": "number",
+                                "label": "Closed Deal Close Date"
+                            },
+                            {
+                                "name": "hs_closed_deal_create_date",
+                                "type": "number",
+                                "label": "Closed Deal Create Date"
+                            },
+                            {
+                                "name": "closed_lost_reason",
+                                "type": "text",
+                                "label": "Closed Lost Reason"
+                            },
+                            {
+                                "name": "hs_closed_won_date",
+                                "type": "date",
+                                "label": "Closed Won Date (Internal)"
+                            },
+                            {
+                                "name": "closed_won_reason",
+                                "type": "text",
+                                "label": "Closed Won Reason"
+                            },
+                            {
+                                "name": "hs_closed_amount_in_home_currency",
+                                "type": "number",
+                                "label": "Closed deal amount in home currency"
+                            },
+                            {
+                                "name": "hs_closed_won_count",
+                                "type": "number",
+                                "label": "Closed won count"
+                            },
+                            {
+                                "name": "createdate",
+                                "type": "date",
+                                "label": "Create Date"
+                            },
+                            {
+                                "name": "hs_created_by_user_id",
+                                "type": "number",
+                                "label": "Created by user ID"
+                            },
+                            {
+                                "name": "hs_cross_account_note",
+                                "type": "text",
+                                "label": "Cross-account Note"
+                            },
+                            {
+                                "name": "hs_cross_sell_opportunity",
+                                "type": "text",
+                                "label": "Cross-sell Opportunity"
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_appointmentscheduled",
+                                "type": "number",
+                                "label": "Cumulative time in \"Appointment Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_closedlost",
+                                "type": "number",
+                                "label": "Cumulative time in \"Closed Lost (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_closedwon",
+                                "type": "number",
+                                "label": "Cumulative time in \"Closed Won (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_contractsent",
+                                "type": "number",
+                                "label": "Cumulative time in \"Contract Sent (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_decisionmakerboughtin",
+                                "type": "number",
+                                "label": "Cumulative time in \"Decision Maker Bought-In (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_presentationscheduled",
+                                "type": "number",
+                                "label": "Cumulative time in \"Presentation Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_cumulative_time_in_qualifiedtobuy",
+                                "type": "number",
+                                "label": "Cumulative time in \"Qualified To Buy (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "deal_currency_code",
+                                "type": "text",
+                                "label": "Currency"
+                            },
+                            {
+                                "name": "hs_v2_date_entered_appointmentscheduled",
+                                "type": "date",
+                                "label": "Date entered \"Appointment Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_closedlost",
+                                "type": "date",
+                                "label": "Date entered \"Closed Lost (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_closedwon",
+                                "type": "date",
+                                "label": "Date entered \"Closed Won (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_contractsent",
+                                "type": "date",
+                                "label": "Date entered \"Contract Sent (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_decisionmakerboughtin",
+                                "type": "date",
+                                "label": "Date entered \"Decision Maker Bought-In (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_presentationscheduled",
+                                "type": "date",
+                                "label": "Date entered \"Presentation Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_qualifiedtobuy",
+                                "type": "date",
+                                "label": "Date entered \"Qualified To Buy (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_entered_current_stage",
+                                "type": "date",
+                                "label": "Date entered current stage"
+                            },
+                            {
+                                "name": "hs_v2_date_exited_appointmentscheduled",
+                                "type": "date",
+                                "label": "Date exited \"Appointment Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_closedlost",
+                                "type": "date",
+                                "label": "Date exited \"Closed Lost (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_closedwon",
+                                "type": "date",
+                                "label": "Date exited \"Closed Won (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_contractsent",
+                                "type": "date",
+                                "label": "Date exited \"Contract Sent (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_decisionmakerboughtin",
+                                "type": "date",
+                                "label": "Date exited \"Decision Maker Bought-In (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_presentationscheduled",
+                                "type": "date",
+                                "label": "Date exited \"Presentation Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_date_exited_qualifiedtobuy",
+                                "type": "date",
+                                "label": "Date exited \"Qualified To Buy (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "engagements_last_meeting_booked",
+                                "type": "date",
+                                "label": "Date of last meeting booked in meetings tool"
+                            },
+                            {
+                                "name": "days_to_close",
+                                "type": "number",
+                                "label": "Days to close"
+                            },
+                            {
+                                "name": "hs_days_to_close_raw",
+                                "type": "number",
+                                "label": "Days to close (without rounding)"
+                            },
+                            {
+                                "name": "hs_all_collaborator_owner_ids",
+                                "type": "text",
+                                "label": "Deal Collaborator"
+                            },
+                            {
+                                "name": "description",
+                                "type": "text",
+                                "label": "Deal Description"
+                            },
+                            {
+                                "name": "dealname",
+                                "type": "text",
+                                "label": "Deal Name"
+                            },
+                            {
+                                "name": "hs_deal_score",
+                                "type": "number",
+                                "label": "Deal Score"
+                            },
+                            {
+                                "name": "hs_is_deal_split",
+                                "type": "text",
+                                "label": "Deal Split Added"
+                            },
+                            {
+                                "name": "hs_all_deal_split_owner_ids",
+                                "type": "text",
+                                "label": "Deal Split Users"
+                            },
+                            {
+                                "name": "dealstage",
+                                "type": "text",
+                                "label": "Deal Stage"
+                            },
+                            {
+                                "name": "hs_tag_ids",
+                                "type": "text",
+                                "label": "Deal Tags"
+                            },
+                            {
+                                "name": "dealtype",
+                                "type": "text",
+                                "label": "Deal Type"
+                            },
+                            {
+                                "name": "hs_deal_amount_calculation_preference",
+                                "type": "text",
+                                "label": "Deal amount calculation preference"
+                            },
+                            {
+                                "name": "hubspot_owner_id",
+                                "type": "text",
+                                "label": "Deal owner"
+                            },
+                            {
+                                "name": "hs_deal_stage_probability",
+                                "type": "number",
+                                "label": "Deal probability"
+                            },
+                            {
+                                "name": "hs_deal_stage_probability_shadow",
+                                "type": "number",
+                                "label": "Deal stage probability shadow"
+                            },
+                            {
+                                "name": "hs_exchange_rate",
+                                "type": "number",
+                                "label": "Exchange rate"
+                            },
+                            {
+                                "name": "hs_forecast_amount",
+                                "type": "number",
+                                "label": "Forecast amount"
+                            },
+                            {
+                                "name": "hs_manual_forecast_category",
+                                "type": "text",
+                                "label": "Forecast category"
+                            },
+                            {
+                                "name": "hs_forecast_probability",
+                                "type": "number",
+                                "label": "Forecast probability"
+                            },
+                            {
+                                "name": "hs_form_id",
+                                "type": "text",
+                                "label": "Form ID"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_discount_percentage",
+                                "type": "text",
+                                "label": "Global Term Line Item Discount Percentage"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_discount_percentage_enabled",
+                                "type": "text",
+                                "label": "Global Term Line Item Discount Percentage Enabled"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_recurringbillingfrequency",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Frequency"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_recurringbillingfrequency_enabled",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Frequency Enabled"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_recurring_billing_period",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Period"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_recurring_billing_period_enabled",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Period Enabled"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_recurring_billing_start_date",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Start Date"
+                            },
+                            {
+                                "name": "hs_line_item_global_term_hs_recurring_billing_start_date_enabled",
+                                "type": "text",
+                                "label": "Global Term Line Item Recurring Billing Start Date Enabled"
+                            },
+                            {
+                                "name": "hs_has_empty_conditional_stage_properties",
+                                "type": "text",
+                                "label": "Has Empty Conditional Stage Properties"
+                            },
+                            {
+                                "name": "hs_has_last_conversation_follow_ups",
+                                "type": "text",
+                                "label": "Has Last Conversation Follow Ups"
+                            },
+                            {
+                                "name": "hs_has_last_meeting_followups",
+                                "type": "text",
+                                "label": "Has Last Meeting Follow Ups"
+                            },
+                            {
+                                "name": "hs_campaign",
+                                "type": "text",
+                                "label": "HubSpot Campaign"
+                            },
+                            {
+                                "name": "hs_createdate",
+                                "type": "date",
+                                "label": "HubSpot Create Date"
+                            },
+                            {
+                                "name": "hs_synced_deal_owner_name_and_email",
+                                "type": "text",
+                                "label": "HubSpot Sales Lead"
+                            },
+                            {
+                                "name": "hs_deal_registration_mrr",
+                                "type": "number",
+                                "label": "HubSpot Shared Deal MRR"
+                            },
+                            {
+                                "name": "hs_deal_registration_mrr_currency_code",
+                                "type": "text",
+                                "label": "HubSpot Shared Deal MRR Currency Code"
+                            },
+                            {
+                                "name": "hubspot_team_id",
+                                "type": "text",
+                                "label": "HubSpot Team"
+                            },
+                            {
+                                "name": "hs_is_active_shared_deal",
+                                "type": "text",
+                                "label": "Is Active Shared Deal"
+                            },
+                            {
+                                "name": "hs_is_closed_count",
+                                "type": "number",
+                                "label": "Is Closed (numeric)"
+                            },
+                            {
+                                "name": "hs_is_closed_won",
+                                "type": "text",
+                                "label": "Is Closed Won"
+                            },
+                            {
+                                "name": "hs_is_closed",
+                                "type": "text",
+                                "label": "Is Deal Closed?"
+                            },
+                            {
+                                "name": "hs_is_in_first_deal_stage",
+                                "type": "text",
+                                "label": "Is In First Deal Stage"
+                            },
+                            {
+                                "name": "hs_is_open_count",
+                                "type": "number",
+                                "label": "Is Open (numeric)"
+                            },
+                            {
+                                "name": "hs_is_stalled",
+                                "type": "text",
+                                "label": "Is Stalled"
+                            },
+                            {
+                                "name": "hs_is_stalled_after_timestamp",
+                                "type": "date",
+                                "label": "Is Stalled After Timestamp"
+                            },
+                            {
+                                "name": "hs_is_closed_lost",
+                                "type": "text",
+                                "label": "Is closed lost"
+                            },
+                            {
+                                "name": "hs_notes_last_activity",
+                                "type": "text",
+                                "label": "Last Activity"
+                            },
+                            {
+                                "name": "notes_last_updated",
+                                "type": "date",
+                                "label": "Last Activity Date"
+                            },
+                            {
+                                "name": "notes_last_contacted",
+                                "type": "date",
+                                "label": "Last Contacted"
+                            },
+                            {
+                                "name": "hs_last_gs_shared_message",
+                                "type": "date",
+                                "label": "Last GS Shared Message"
+                            },
+                            {
+                                "name": "hs_lastmodifieddate",
+                                "type": "date",
+                                "label": "Last Modified Date"
+                            },
+                            {
+                                "name": "hs_last_partner_shared_message_date",
+                                "type": "date",
+                                "label": "Last Partner Shared Message Date"
+                            },
+                            {
+                                "name": "hs_last_shared_message_create_date",
+                                "type": "date",
+                                "label": "Last Shared Message Create Date"
+                            },
+                            {
+                                "name": "hs_last_call_id_with_followups",
+                                "type": "number",
+                                "label": "Last call ID with followups"
+                            },
+                            {
+                                "name": "hs_last_conversation_with_followups_object_coordinates",
+                                "type": "text",
+                                "label": "Last conversation with follow-ups"
+                            },
+                            {
+                                "name": "hs_last_email_with_followups_object_coordinates",
+                                "type": "text",
+                                "label": "Last email with follow-ups"
+                            },
+                            {
+                                "name": "hs_last_meeting_id_with_followups",
+                                "type": "number",
+                                "label": "Last meeting ID with followups"
+                            },
+                            {
+                                "name": "hs_latest_approval_status",
+                                "type": "text",
+                                "label": "Latest Approval Status"
+                            },
+                            {
+                                "name": "hs_latest_approval_status_approval_id",
+                                "type": "number",
+                                "label": "Latest Approval Status Approval ID"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source",
+                                "type": "text",
+                                "label": "Latest Traffic Source"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_company",
+                                "type": "text",
+                                "label": "Latest Traffic Source Company"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_contact",
+                                "type": "text",
+                                "label": "Latest Traffic Source Contact"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_1",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 1"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_1_company",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 1 Company"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_1_contact",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 1 Contact"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_2",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 2"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_2_company",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 2 Company"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_data_2_contact",
+                                "type": "text",
+                                "label": "Latest Traffic Source Data 2 Contact"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_timestamp",
+                                "type": "date",
+                                "label": "Latest Traffic Source Timestamp"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_timestamp_company",
+                                "type": "date",
+                                "label": "Latest Traffic Source Timestamp Company"
+                            },
+                            {
+                                "name": "hs_analytics_latest_source_timestamp_contact",
+                                "type": "date",
+                                "label": "Latest Traffic Source Timestamp Contact"
+                            },
+                            {
+                                "name": "hs_latest_marketing_email_click_date",
+                                "type": "date",
+                                "label": "Latest marketing email click date"
+                            },
+                            {
+                                "name": "hs_latest_marketing_email_open_date",
+                                "type": "date",
+                                "label": "Latest marketing email open date"
+                            },
+                            {
+                                "name": "hs_latest_marketing_email_reply_date",
+                                "type": "date",
+                                "label": "Latest marketing email reply date"
+                            },
+                            {
+                                "name": "hs_latest_meeting_activity",
+                                "type": "date",
+                                "label": "Latest meeting activity"
+                            },
+                            {
+                                "name": "hs_latest_sales_email_click_date",
+                                "type": "date",
+                                "label": "Latest sales email click date"
+                            },
+                            {
+                                "name": "hs_latest_sales_email_open_date",
+                                "type": "date",
+                                "label": "Latest sales email open date"
+                            },
+                            {
+                                "name": "hs_latest_sales_email_reply_date",
+                                "type": "date",
+                                "label": "Latest sales email reply date"
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_appointmentscheduled",
+                                "type": "number",
+                                "label": "Latest time in \"Appointment Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_closedlost",
+                                "type": "number",
+                                "label": "Latest time in \"Closed Lost (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_closedwon",
+                                "type": "number",
+                                "label": "Latest time in \"Closed Won (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_contractsent",
+                                "type": "number",
+                                "label": "Latest time in \"Contract Sent (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_decisionmakerboughtin",
+                                "type": "number",
+                                "label": "Latest time in \"Decision Maker Bought-In (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_presentationscheduled",
+                                "type": "number",
+                                "label": "Latest time in \"Presentation Scheduled (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_v2_latest_time_in_qualifiedtobuy",
+                                "type": "number",
+                                "label": "Latest time in \"Qualified To Buy (Sales Pipeline)\""
+                            },
+                            {
+                                "name": "hs_likelihood_to_close",
+                                "type": "number",
+                                "label": "Likelihood to close by the close date"
+                            },
+                            {
+                                "name": "hs_manual_campaign_ids",
+                                "type": "number",
+                                "label": "Manual campaign ids"
+                            },
+                            {
+                                "name": "engagements_last_meeting_booked_medium",
+                                "type": "text",
+                                "label": "Medium of last booking in meetings tool"
+                            },
+                            {
+                                "name": "hs_merged_object_ids",
+                                "type": "text",
+                                "label": "Merged Deal IDs"
+                            },
+                            {
+                                "name": "hs_mrr",
+                                "type": "number",
+                                "label": "Monthly recurring revenue"
+                            },
+                            {
+                                "name": "hs_net_pipeline_impact",
+                                "type": "number",
+                                "label": "Net Pipeline Impact"
+                            },
+                            {
+                                "name": "hs_notes_next_activity",
+                                "type": "text",
+                                "label": "Next Activity"
+                            },
+                            {
+                                "name": "notes_next_activity_date",
+                                "type": "date",
+                                "label": "Next Activity Date"
+                            },
+                            {
+                                "name": "hs_notes_next_activity_type",
+                                "type": "text",
+                                "label": "Next Activity Type"
+                            },
+                            {
+                                "name": "hs_next_meeting_id",
+                                "type": "number",
+                                "label": "Next Meeting"
+                            },
+                            {
+                                "name": "hs_next_meeting_name",
+                                "type": "text",
+                                "label": "Next Meeting Name"
+                            },
+                            {
+                                "name": "hs_next_meeting_start_time",
+                                "type": "date",
+                                "label": "Next Meeting Start Time"
+                            },
+                            {
+                                "name": "hs_next_step_updated_at",
+                                "type": "date",
+                                "label": "Next Step Updated At"
+                            },
+                            {
+                                "name": "hs_next_step",
+                                "type": "text",
+                                "label": "Next step"
+                            },
+                            {
+                                "name": "hs_num_associated_active_deal_registrations",
+                                "type": "number",
+                                "label": "Number of Active Deal Registrations"
+                            },
+                            {
+                                "name": "num_associated_contacts",
+                                "type": "number",
+                                "label": "Number of Associated Contacts"
+                            },
+                            {
+                                "name": "hs_num_of_associated_line_items",
+                                "type": "number",
+                                "label": "Number of Associated Line Items"
+                            },
+                            {
+                                "name": "hs_num_associated_deal_registrations",
+                                "type": "number",
+                                "label": "Number of Deal Registrations"
+                            },
+                            {
+                                "name": "hs_num_associated_deal_splits",
+                                "type": "number",
+                                "label": "Number of Deal Splits"
+                            },
+                            {
+                                "name": "num_notes",
+                                "type": "number",
+                                "label": "Number of Sales Activities"
+                            },
+                            {
+                                "name": "hs_number_of_call_engagements",
+                                "type": "number",
+                                "label": "Number of call engagements"
+                            },
+                            {
+                                "name": "hs_number_of_inbound_calls",
+                                "type": "number",
+                                "label": "Number of inbound calls"
+                            },
+                            {
+                                "name": "hs_number_of_outbound_calls",
+                                "type": "number",
+                                "label": "Number of outbound calls"
+                            },
+                            {
+                                "name": "hs_number_of_overdue_tasks",
+                                "type": "number",
+                                "label": "Number of overdue tasks"
+                            },
+                            {
+                                "name": "hs_number_of_scheduled_meetings",
+                                "type": "number",
+                                "label": "Number of scheduled meetings"
+                            },
+                            {
+                                "name": "hs_num_target_accounts",
+                                "type": "number",
+                                "label": "Number of target accounts"
+                            },
+                            {
+                                "name": "num_contacted_notes",
+                                "type": "number",
+                                "label": "Number of times contacted"
+                            },
+                            {
+                                "name": "hs_open_amount_in_home_currency",
+                                "type": "number",
+                                "label": "Open amount in home currency"
+                            },
+                            {
+                                "name": "hs_open_deal_create_date",
+                                "type": "number",
+                                "label": "Open deal create date"
+                            },
+                            {
+                                "name": "hs_analytics_source",
+                                "type": "text",
+                                "label": "Original Traffic Source"
+                            },
+                            {
+                                "name": "hs_analytics_source_data_1",
+                                "type": "text",
+                                "label": "Original Traffic Source Drill-Down 1"
+                            },
+                            {
+                                "name": "hs_analytics_source_data_2",
+                                "type": "text",
+                                "label": "Original Traffic Source Drill-Down 2"
+                            },
+                            {
+                                "name": "hubspot_owner_assigneddate",
+                                "type": "date",
+                                "label": "Owner assigned date"
+                            },
+                            {
+                                "name": "hs_owning_teams",
+                                "type": "text",
+                                "label": "Owning Teams"
+                            },
+                            {
+                                "name": "hs_partner_tech_win",
+                                "type": "text",
+                                "label": "Partner Tech Win"
+                            },
+                            {
+                                "name": "hs_was_imported",
+                                "type": "text",
+                                "label": "Performed in an import"
+                            },
+                            {
+                                "name": "hs_pinned_engagement_id",
+                                "type": "number",
+                                "label": "Pinned Engagement ID"
+                            },
+                            {
+                                "name": "pipeline",
+                                "type": "text",
+                                "label": "Pipeline"
+                            },
+                            {
+                                "name": "hs_primary_associated_company",
+                                "type": "number",
+                                "label": "Primary Associated Company"
+                            },
+                            {
+                                "name": "hs_primary_quote_data_updated_at",
+                                "type": "date",
+                                "label": "Primary quote data updated at"
+                            },
+                            {
+                                "name": "hs_priority",
+                                "type": "text",
+                                "label": "Priority"
+                            },
+                            {
+                                "name": "hs_read_only",
+                                "type": "text",
+                                "label": "Read only object"
+                            },
+                            {
+                                "name": "hs_sales_email_last_replied",
+                                "type": "date",
+                                "label": "Recent Sales Email Replied Date"
+                            },
+                            {
+                                "name": "hs_object_id",
+                                "type": "number",
+                                "label": "Record ID"
+                            },
+                            {
+                                "name": "hs_object_source",
+                                "type": "text",
+                                "label": "Record creation source"
+                            },
+                            {
+                                "name": "hs_object_source_id",
+                                "type": "text",
+                                "label": "Record creation source ID"
+                            },
+                            {
+                                "name": "hs_object_source_user_id",
+                                "type": "number",
+                                "label": "Record creation source user ID"
+                            },
+                            {
+                                "name": "hs_object_source_label",
+                                "type": "text",
+                                "label": "Record source"
+                            },
+                            {
+                                "name": "hs_object_source_detail_1",
+                                "type": "text",
+                                "label": "Record source detail 1"
+                            },
+                            {
+                                "name": "hs_object_source_detail_2",
+                                "type": "text",
+                                "label": "Record source detail 2"
+                            },
+                            {
+                                "name": "hs_object_source_detail_3",
+                                "type": "text",
+                                "label": "Record source detail 3"
+                            },
+                            {
+                                "name": "hs_shared_team_ids",
+                                "type": "text",
+                                "label": "Shared teams"
+                            },
+                            {
+                                "name": "hs_shared_user_ids",
+                                "type": "text",
+                                "label": "Shared users"
+                            },
+                            {
+                                "name": "hs_source_object_id",
+                                "type": "number",
+                                "label": "Source Object ID"
+                            },
+                            {
+                                "name": "engagements_last_meeting_booked_source",
+                                "type": "text",
+                                "label": "Source of last booking in meetings tool"
+                            },
+                            {
+                                "name": "hs_submission_idempotent_id",
+                                "type": "text",
+                                "label": "Submission Idempotent ID"
+                            },
+                            {
+                                "name": "hs_predicted_amount",
+                                "type": "number",
+                                "label": "The predicted deal amount"
+                            },
+                            {
+                                "name": "hs_predicted_amount_in_home_currency",
+                                "type": "number",
+                                "label": "The predicted deal amount in your company's currency"
+                            },
+                            {
+                                "name": "hs_v2_time_in_current_stage",
+                                "type": "date",
+                                "label": "Time in current stage"
+                            },
+                            {
+                                "name": "hs_tcv",
+                                "type": "number",
+                                "label": "Total contract value"
+                            },
+                            {
+                                "name": "hs_unique_creation_key",
+                                "type": "text",
+                                "label": "Unique creation key"
+                            },
+                            {
+                                "name": "hs_updated_by_user_id",
+                                "type": "number",
+                                "label": "Updated by user ID"
+                            },
+                            {
+                                "name": "hs_user_ids_of_all_notification_followers",
+                                "type": "text",
+                                "label": "User IDs of all notification followers"
+                            },
+                            {
+                                "name": "hs_user_ids_of_all_notification_unfollowers",
+                                "type": "text",
+                                "label": "User IDs of all notification unfollowers"
+                            },
+                            {
+                                "name": "hs_user_ids_of_all_owners",
+                                "type": "text",
+                                "label": "User IDs of all owners"
+                            },
+                            {
+                                "name": "hs_projected_amount",
+                                "type": "number",
+                                "label": "Weighted amount"
+                            },
+                            {
+                                "name": "hs_projected_amount_in_home_currency",
+                                "type": "number",
+                                "label": "Weighted amount in company currency"
+                            },
+                            {
+                                "name": "hs_weighted_pipeline_in_company_currency",
+                                "type": "number",
+                                "label": "Weighted open pipeline in company currency"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Properties"
+                    }
+                ]
             }
-          }
         },
-        "parameters": [
-          {
-            "name": "__IMTCONN__",
-            "type": "account:hubspotcrm",
-            "label": "Connection",
-            "required": true
-          }
-        ],
-        "expect": [
-          { "name": "watchBy", "type": "select", "label": "Watch Deals by" },
-          { "name": "limit", "type": "uinteger", "label": "Limit" }
-        ],
-        "advanced": true,
-        "note": "Filter dealstage = appointmentscheduled. Schedule era 15min, hoje OFF (Cláudia desligou no fim do ano passado) — roda manual via Run once.",
-        "scheduling": {
-          "type": "indefinitely",
-          "interval": 900,
-          "status": "off"
+        {
+            "id": 8,
+            "module": "http:MakeRequest",
+            "version": 4,
+            "parameters": {
+                "tlsType": "",
+                "authenticationType": "noAuth"
+            },
+            "mapper": {
+                "url": "https://api.search.brave.com/res/v1/web/search",
+                "method": "get",
+                "headers": [
+                    {
+                        "name": "X-Subscription-Token",
+                        "value": "BRAVE_SEARCH_API_KEY"
+                    },
+                    {
+                        "name": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "shareCookies": false,
+                "parseResponse": true,
+                "allowRedirects": true,
+                "queryParameters": [
+                    {
+                        "name": "q",
+                        "value": "{{6.properties.dealname}} headquarters employees revenue technology stack"
+                    },
+                    {
+                        "name": "count",
+                        "value": "5"
+                    },
+                    {
+                        "name": "country",
+                        "value": "BR"
+                    },
+                    {
+                        "name": "search_lang",
+                        "value": "pt-br"
+                    }
+                ],
+                "stopOnHttpError": true,
+                "requestCompressedContent": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 292,
+                    "y": -1
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "7cd030afe9f0ea00"
+                },
+                "restore": {
+                    "expect": {
+                        "method": {
+                            "mode": "chose",
+                            "label": "GET"
+                        },
+                        "headers": {
+                            "mode": "chose",
+                            "items": [
+                                null,
+                                null
+                            ]
+                        },
+                        "contentType": {
+                            "label": "Empty"
+                        },
+                        "shareCookies": {
+                            "mode": "chose"
+                        },
+                        "parseResponse": {
+                            "mode": "chose"
+                        },
+                        "allowRedirects": {
+                            "mode": "chose"
+                        },
+                        "paginationType": {
+                            "label": "Empty"
+                        },
+                        "queryParameters": {
+                            "mode": "chose",
+                            "items": [
+                                null,
+                                null,
+                                null,
+                                null
+                            ]
+                        },
+                        "stopOnHttpError": {
+                            "mode": "chose"
+                        },
+                        "requestCompressedContent": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "tlsType": {
+                            "label": "Empty"
+                        },
+                        "authenticationType": {
+                            "label": "No authenticationUse when no credentials are required for the request."
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "authenticationType",
+                        "type": "select",
+                        "label": "Authentication type",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "noAuth",
+                                "apiKey",
+                                "basicAuth",
+                                "oAuth"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tlsType",
+                        "type": "select",
+                        "label": "Transport layer security (TLS)",
+                        "validate": {
+                            "enum": [
+                                "mTls",
+                                "tls"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "proxyKeychain",
+                        "type": "keychain:proxy",
+                        "label": "Proxy"
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL",
+                        "required": true
+                    },
+                    {
+                        "name": "method",
+                        "type": "select",
+                        "label": "Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "get",
+                                "head",
+                                "post",
+                                "put",
+                                "patch",
+                                "delete",
+                                "options"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "headers",
+                        "spec": {
+                            "name": "value",
+                            "spec": [
+                                {
+                                    "name": "name",
+                                    "type": "text",
+                                    "label": "Name",
+                                    "required": true,
+                                    "validate": {
+                                        "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$"
+                                    }
+                                },
+                                {
+                                    "name": "value",
+                                    "type": "text",
+                                    "label": "Value"
+                                }
+                            ],
+                            "type": "collection",
+                            "label": "Header"
+                        },
+                        "type": "array",
+                        "label": "Headers"
+                    },
+                    {
+                        "name": "queryParameters",
+                        "spec": {
+                            "name": "value",
+                            "spec": [
+                                {
+                                    "name": "name",
+                                    "type": "text",
+                                    "label": "Name",
+                                    "required": true
+                                },
+                                {
+                                    "name": "value",
+                                    "type": "text",
+                                    "label": "Value"
+                                }
+                            ],
+                            "type": "collection",
+                            "label": "Parameter"
+                        },
+                        "type": "array",
+                        "label": "Query parameters"
+                    },
+                    {
+                        "name": "contentType",
+                        "type": "select",
+                        "label": "Body content type",
+                        "validate": {
+                            "enum": [
+                                "json",
+                                "multipart",
+                                "urlEncoded",
+                                "custom"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parseResponse",
+                        "type": "boolean",
+                        "label": "Parse response",
+                        "required": true
+                    },
+                    {
+                        "name": "stopOnHttpError",
+                        "type": "boolean",
+                        "label": "Return error if HTTP request fails",
+                        "required": true
+                    },
+                    {
+                        "name": "timeout",
+                        "type": "uinteger",
+                        "label": "Timeout",
+                        "validate": {
+                            "max": 300,
+                            "min": 1
+                        }
+                    },
+                    {
+                        "name": "allowRedirects",
+                        "type": "boolean",
+                        "label": "Allow redirects",
+                        "required": true
+                    },
+                    {
+                        "name": "shareCookies",
+                        "type": "boolean",
+                        "label": "Share cookies with other HTTP modules",
+                        "required": true
+                    },
+                    {
+                        "name": "requestCompressedContent",
+                        "type": "boolean",
+                        "label": "Request compressed content",
+                        "required": true
+                    },
+                    {
+                        "name": "paginationType",
+                        "type": "select",
+                        "label": "Pagination type",
+                        "validate": {
+                            "enum": [
+                                "offsetBased",
+                                "pageBased",
+                                "urlBased",
+                                "tokenBased"
+                            ]
+                        }
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "data",
+                        "type": "any",
+                        "label": "Data"
+                    },
+                    {
+                        "name": "statusCode",
+                        "type": "number",
+                        "label": "Status Code"
+                    },
+                    {
+                        "name": "headers",
+                        "spec": [
+                            {
+                                "name": "content-length",
+                                "type": "text",
+                                "label": "Content-Length"
+                            },
+                            {
+                                "name": "content-encoding",
+                                "type": "text",
+                                "label": "Content-Encoding"
+                            },
+                            {
+                                "name": "content-type",
+                                "type": "text",
+                                "label": "Content-Type"
+                            },
+                            {
+                                "name": "server",
+                                "type": "text",
+                                "label": "Server"
+                            },
+                            {
+                                "name": "cache-control",
+                                "type": "text",
+                                "label": "Cache-Control"
+                            },
+                            {
+                                "name": "set-cookie",
+                                "spec": {
+                                    "type": "text"
+                                },
+                                "type": "array",
+                                "label": "Set-Cookie"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Headers"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 18,
+            "module": "gemini-ai:simpleTextPrompt",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "model": "gemini-2.5-flash",
+                "textPrompt": "{{8.data}}{{8.data.web}}{{8.data.web.results}}Analise os resultados de busca abaixo e retorne SOMENTE um JSON válido com os campos:\r\n\r\nindustry\r\nsize_employees\r\ntech_stack\r\nbuying_signals\r\nicp_match_score\r\ntalking_points\r\n\r\nRegras:\r\n- icp_match_score deve ser um número inteiro de 0 a 100.\r\n- tech_stack deve ser uma lista.\r\n- Não invente informações que não estejam sustentadas pelos resultados.\r\n- Quando não houver informação suficiente, use null.\r\n- Não escreva explicações fora do JSON.\r\n\r\nResultados da busca:\n\nIMPORTANTE:\nRetorne apenas o objeto JSON puro.\nNão use blocos Markdown.\nNão use ```json.\nNão use ```.\nNão escreva nenhum texto antes ou depois do JSON.\nA resposta deve começar com { e terminar com }."
+            },
+            "metadata": {
+                "designer": {
+                    "x": 592,
+                    "y": -1
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "f7a6b91b1374b82b"
+                },
+                "restore": {
+                    "expect": {
+                        "model": {
+                            "label": "Gemini 2.5 FlashApplies smart reasoning to fast data tasks while ensuring quick response times"
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "name": "model",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "gemini-2.5-flash",
+                                "gemini-3.8-flash",
+                                "gemini-3.7-flash",
+                                "gemini-3.6-flash",
+                                "gemini-3.5-flash",
+                                "gemini-3.1-pro-preview",
+                                "gemini-3-flash-preview",
+                                "gemini-2.5-pro"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "textPrompt",
+                        "type": "text",
+                        "label": "Text prompt",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 21,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {
+                "type": 504402
+            },
+            "mapper": {
+                "json": "{{18.result}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 911,
+                    "y": -2
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "8c08b510ec775d7e"
+                },
+                "restore": {
+                    "parameters": {
+                        "type": {
+                            "label": "My data structure"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "type",
+                        "type": "udt",
+                        "label": "Data structure"
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "json",
+                        "type": "text",
+                        "label": "JSON string",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "help": "",
+                        "name": "industry",
+                        "type": "text",
+                        "label": "Industry"
+                    },
+                    {
+                        "help": "",
+                        "name": "size_employees",
+                        "type": "text",
+                        "label": "Size employees"
+                    },
+                    {
+                        "help": "",
+                        "name": "tech_stack",
+                        "spec": {
+                            "type": "text"
+                        },
+                        "type": "array",
+                        "label": "Tech stack"
+                    },
+                    {
+                        "help": "",
+                        "name": "buying_signals",
+                        "spec": {
+                            "type": "text"
+                        },
+                        "type": "array",
+                        "label": "Buying signals"
+                    },
+                    {
+                        "help": "",
+                        "name": "icp_match_score",
+                        "type": "number",
+                        "label": "Icp match score"
+                    },
+                    {
+                        "help": "",
+                        "name": "talking_points",
+                        "spec": {
+                            "type": "text"
+                        },
+                        "type": "array",
+                        "label": "Talking points"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 19,
+            "module": "airtable:ActionCreateRecord",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 11215330
+            },
+            "mapper": {
+                "base": "appR7HsNYJXA5GpUa",
+                "table": "tbl5VGe0J6J8oAU8r",
+                "record": {
+                    "fld15eWG1bSZz4EhF": "{{21.buying_signals}}",
+                    "fld2BCBLy1N1wHHT5": "{{6.properties.dealname}}",
+                    "fld3kFuQHmcPFFCym": "{{21.industry}}",
+                    "fldMcMMKFRXBKgZ6I": "{{6.id}}",
+                    "fldOX0bdV0EFPFEkX": "{{21.tech_stack}}",
+                    "fldPbw8r1OlTQNiPW": "{{now}}",
+                    "fldTpMmHpGwDuMxJS": "{{8.data.web}}",
+                    "fldVGeiOlFGa6piAX": "{{21.size_employees}}",
+                    "fldeLpYoAJDcgSfPg": "{{21.talking_points}}",
+                    "fldvexgh8iM8rmDLL": "{{21.icp_match_score}}"
+                },
+                "typecast": false,
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1217,
+                    "y": -13
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "17f2efb96a30be0c"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "label": "VendeMais CRM"
+                        },
+                        "table": {
+                            "label": "Lead Enrichment",
+                            "nested": [
+                                {
+                                    "name": "record",
+                                    "spec": [
+                                        {
+                                            "name": "fldMcMMKFRXBKgZ6I",
+                                            "type": "text",
+                                            "label": "deal_id"
+                                        },
+                                        {
+                                            "name": "fld2BCBLy1N1wHHT5",
+                                            "type": "text",
+                                            "label": "company_name"
+                                        },
+                                        {
+                                            "name": "fld3kFuQHmcPFFCym",
+                                            "type": "text",
+                                            "label": "industry"
+                                        },
+                                        {
+                                            "name": "fldVGeiOlFGa6piAX",
+                                            "type": "text",
+                                            "label": "size_employees"
+                                        },
+                                        {
+                                            "name": "fldOX0bdV0EFPFEkX",
+                                            "type": "text",
+                                            "label": "tech_stack",
+                                            "multiline": true
+                                        },
+                                        {
+                                            "name": "fld15eWG1bSZz4EhF",
+                                            "type": "text",
+                                            "label": "buying_signals",
+                                            "multiline": true
+                                        },
+                                        {
+                                            "name": "fldvexgh8iM8rmDLL",
+                                            "type": "number",
+                                            "label": "icp_match_score"
+                                        },
+                                        {
+                                            "name": "fldeLpYoAJDcgSfPg",
+                                            "type": "text",
+                                            "label": "talking_points",
+                                            "multiline": true
+                                        },
+                                        {
+                                            "name": "fldPbw8r1OlTQNiPW",
+                                            "time": true,
+                                            "type": "date",
+                                            "label": "enriched_at"
+                                        },
+                                        {
+                                            "name": "fldTpMmHpGwDuMxJS",
+                                            "type": "text",
+                                            "label": "raw_search_results",
+                                            "multiline": true
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Record"
+                                }
+                            ]
+                        },
+                        "typecast": {
+                            "mode": "chose"
+                        },
+                        "useColumnId": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable corporate connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "typecast",
+                        "type": "boolean",
+                        "label": "Smart links",
+                        "required": true
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use Column ID",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "record",
+                        "spec": [
+                            {
+                                "name": "fldMcMMKFRXBKgZ6I",
+                                "type": "text",
+                                "label": "deal_id"
+                            },
+                            {
+                                "name": "fld2BCBLy1N1wHHT5",
+                                "type": "text",
+                                "label": "company_name"
+                            },
+                            {
+                                "name": "fld3kFuQHmcPFFCym",
+                                "type": "text",
+                                "label": "industry"
+                            },
+                            {
+                                "name": "fldVGeiOlFGa6piAX",
+                                "type": "text",
+                                "label": "size_employees"
+                            },
+                            {
+                                "name": "fldOX0bdV0EFPFEkX",
+                                "type": "text",
+                                "label": "tech_stack"
+                            },
+                            {
+                                "name": "fld15eWG1bSZz4EhF",
+                                "type": "text",
+                                "label": "buying_signals"
+                            },
+                            {
+                                "name": "fldvexgh8iM8rmDLL",
+                                "type": "number",
+                                "label": "icp_match_score"
+                            },
+                            {
+                                "name": "fldeLpYoAJDcgSfPg",
+                                "type": "text",
+                                "label": "talking_points"
+                            },
+                            {
+                                "name": "fldPbw8r1OlTQNiPW",
+                                "time": true,
+                                "type": "date",
+                                "label": "enriched_at"
+                            },
+                            {
+                                "name": "fldTpMmHpGwDuMxJS",
+                                "type": "text",
+                                "label": "raw_search_results"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Record"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdTime",
+                        "type": "date",
+                        "label": "Created Time"
+                    },
+                    {
+                        "name": "deal_id",
+                        "type": "text",
+                        "label": "deal_id"
+                    },
+                    {
+                        "name": "company_name",
+                        "type": "text",
+                        "label": "company_name"
+                    },
+                    {
+                        "name": "industry",
+                        "type": "text",
+                        "label": "industry"
+                    },
+                    {
+                        "name": "size_employees",
+                        "type": "text",
+                        "label": "size_employees"
+                    },
+                    {
+                        "name": "tech_stack",
+                        "type": "text",
+                        "label": "tech_stack",
+                        "multiline": true
+                    },
+                    {
+                        "name": "buying_signals",
+                        "type": "text",
+                        "label": "buying_signals",
+                        "multiline": true
+                    },
+                    {
+                        "name": "icp_match_score",
+                        "type": "number",
+                        "label": "icp_match_score"
+                    },
+                    {
+                        "name": "talking_points",
+                        "type": "text",
+                        "label": "talking_points",
+                        "multiline": true
+                    },
+                    {
+                        "name": "enriched_at",
+                        "time": true,
+                        "type": "date",
+                        "label": "enriched_at"
+                    },
+                    {
+                        "name": "raw_search_results",
+                        "type": "text",
+                        "label": "raw_search_results",
+                        "multiline": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 28,
+            "module": "hubspotcrm:updateDeal",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 11206890
+            },
+            "mapper": {
+                "dealId": "{{6.id}}",
+                "_method": "compact",
+                "properties": [
+                    {
+                        "key": "icp_match_score",
+                        "value": "{{21.icp_match_score}}"
+                    }
+                ],
+                "parseCustomFields": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1517,
+                    "y": -13
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "b876a29140e53b96"
+                },
+                "restore": {
+                    "expect": {
+                        "_method": {
+                            "mode": "chose",
+                            "label": "Compact"
+                        },
+                        "properties": {
+                            "mode": "chose",
+                            "items": [
+                                {
+                                    "key": {
+                                        "mode": "chose",
+                                        "label": "ICP Match Score"
+                                    }
+                                }
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "HubSpot corporate connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "dealId",
+                        "type": "uinteger",
+                        "label": "Deal ID",
+                        "required": true
+                    },
+                    {
+                        "name": "_method",
+                        "type": "select",
+                        "label": "View Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "compact",
+                                "all"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    },
+                    {
+                        "name": "properties",
+                        "spec": [
+                            {
+                                "name": "key",
+                                "type": "select",
+                                "label": "Key",
+                                "dynamic": true,
+                                "options": []
+                            },
+                            {
+                                "name": "value",
+                                "type": "any",
+                                "label": "Value"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Properties"
+                    }
+                ]
+            }
         }
-      }
-    },
-    {
-      "id": 2,
-      "module": "google-cse:search",
-      "version": 1,
-      "parameters": {
-        "__IMTCONN__": 0
-      },
-      "mapper": {
-        "cx": "017576662512468239146:omuauf_lfve",
-        "q": "{{1.properties.company}} headquarters employees revenue technology stack",
-        "num": 5,
-        "safe": "off",
-        "lr": "lang_pt"
-      },
-      "metadata": {
-        "designer": { "x": 300, "y": 0 },
-        "restore": {
-          "parameters": {
-            "__IMTCONN__": {
-              "label": "Joana Google Custom Search API (key/billing PESSOAIS)",
-              "data": { "scoped": "false", "connection": "google-cse" }
-            }
-          }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
         },
-        "parameters": [
-          {
-            "name": "__IMTCONN__",
-            "type": "account:google-cse",
-            "label": "Connection",
-            "required": true
-          }
-        ],
-        "expect": [
-          { "name": "q", "type": "text", "label": "Query" },
-          { "name": "cx", "type": "text", "label": "Search engine ID" },
-          { "name": "num", "type": "uinteger", "label": "Number of results" }
-        ],
-        "note": "Sem truncamento dos snippets — vão gigantes pro OpenAI e estouram tokens."
-      }
-    },
-    {
-      "id": 3,
-      "module": "openai-gpt-3:createChatCompletion",
-      "version": 1,
-      "parameters": {
-        "__IMTCONN__": 0
-      },
-      "mapper": {
-        "model": "gpt-5.4-mini",
-        "temperature": "0.3",
-        "max_tokens": "1500",
-        "response_format": { "type": "json_object" },
-        "messages": [
-          {
-            "role": "system",
-            "content": "Você é um analista de inteligência de vendas B2B. Sempre responde em JSON válido, sem texto antes ou depois."
-          },
-          {
-            "role": "user",
-            "content": "Você é um analista de inteligência de vendas. Recebeu o nome da empresa: {{1.properties.company}} e os resultados de busca: {{3.items}}. Retorne em JSON:\n{\n  \"industry\": \"...\",\n  \"size_employees\": \"...\",\n  \"tech_stack\": [...],\n  \"buying_signals\": [...],\n  \"icp_match_score\": 0-100,\n  \"talking_points\": [...]\n}"
-          }
-        ]
-      },
-      "metadata": {
-        "designer": { "x": 600, "y": 0 },
-        "restore": {
-          "parameters": {
-            "__IMTCONN__": {
-              "label": "Joana OpenAI Personal (sk-... no cartão PESSOAL — URGENTE trocar)",
-              "data": { "scoped": "false", "connection": "openai-gpt-3" }
-            }
-          }
+        "designer": {
+            "orphans": []
         },
-        "parameters": [
-          {
-            "name": "__IMTCONN__",
-            "type": "account:openai-gpt-3",
-            "label": "Connection",
-            "required": true
-          }
-        ],
-        "expect": [
-          { "name": "model", "type": "select", "label": "Model" },
-          { "name": "temperature", "type": "number", "label": "Temperature" },
-          { "name": "max_tokens", "type": "uinteger", "label": "Max tokens" },
-          { "name": "messages", "type": "array", "label": "Messages" }
-        ],
-        "note": "Sem error handling: se a OpenAI devolve JSON quebrado o cenário morre silencioso. Alternativa: Anthropic Claude (módulo anthropic:createMessage)."
-      }
-    },
-    {
-      "id": 4,
-      "module": "airtable:ActionCreateRecord",
-      "version": 3,
-      "parameters": {
-        "__IMTCONN__": 0
-      },
-      "mapper": {
-        "base": "appXXXXXXXXXX",
-        "table": "Lead Enrichment",
-        "record": {
-          "deal_id": "{{1.id}}",
-          "company_name": "{{1.properties.company}}",
-          "industry": "{{3.choices[].message.content.industry}}",
-          "size_employees": "{{3.choices[].message.content.size_employees}}",
-          "tech_stack": "{{join(3.choices[].message.content.tech_stack; \",\")}}",
-          "buying_signals": "{{3.choices[].message.content.buying_signals}}",
-          "icp_match_score": "{{3.choices[].message.content.icp_match_score}}",
-          "talking_points": "{{3.choices[].message.content.talking_points}}",
-          "enriched_at": "{{now}}",
-          "raw_search_results": "{{toString(2.items)}}"
-        }
-      },
-      "metadata": {
-        "designer": { "x": 900, "y": 0 },
-        "restore": {
-          "parameters": {
-            "__IMTCONN__": {
-              "label": "Joana Airtable PAT (token pessoal, base corporativa)",
-              "data": { "scoped": "false", "connection": "airtable" }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "__IMTCONN__",
-            "type": "account:airtable",
-            "label": "Connection",
-            "required": true
-          }
-        ],
-        "expect": [
-          { "name": "base", "type": "text", "label": "Base" },
-          { "name": "table", "type": "text", "label": "Table" }
-        ],
-        "note": "Sem dedup por deal_id — re-enriquecimento cria linha duplicada. tech_stack (Multiple select) explode opções. Falta JSON Parse explícito do choices[0].message.content."
-      }
-    },
-    {
-      "id": 5,
-      "module": "hubspotcrm:updateDeal",
-      "version": 1,
-      "parameters": {
-        "__IMTCONN__": 0
-      },
-      "mapper": {
-        "dealId": "{{1.id}}",
-        "properties": {
-          "icp_match_score": "{{3.choices[].message.content.icp_match_score}}",
-          "enrichment_industry": "{{3.choices[].message.content.industry}}",
-          "enrichment_last_run": "{{now}}",
-          "enrichment_status": "enriched"
-        }
-      },
-      "metadata": {
-        "designer": { "x": 1200, "y": 0 },
-        "restore": {
-          "parameters": {
-            "__IMTCONN__": {
-              "label": "Joana HubSpot Personal (mesma conexão do trigger)",
-              "data": { "scoped": "false", "connection": "hubspotcrm" }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "__IMTCONN__",
-            "type": "account:hubspotcrm",
-            "label": "Connection",
-            "required": true
-          }
-        ],
-        "expect": [
-          { "name": "dealId", "type": "text", "label": "Deal ID" }
-        ],
-        "note": "Sem branch de falha: se módulo 3 morre, enrichment_status fica eterno em 'pending' (nunca vira 'failed')."
-      }
+        "zone": "us2.make.com",
+        "notes": []
     }
-  ],
-  "metadata": {
-    "instant": false,
-    "version": 1,
-    "scenario": {
-      "roundtrips": 1,
-      "maxErrors": 3,
-      "autoCommit": true,
-      "autoCommitTriggerLast": true,
-      "sequential": false,
-      "slots": null,
-      "confidential": false,
-      "dataloss": false,
-      "dlq": false,
-      "freshVariables": false
-    },
-    "designer": {
-      "orphans": []
-    },
-    "zone": "eu1.make.com",
-    "notes": [
-      "Esqueleto reconstruído a partir de make-blueprint-pseudo.txt + screenshots (Joana não exportou o blueprint limpo antes de sair).",
-      "LIMITAÇÃO MAKE: conexões (__IMTCONN__) NÃO exportam no JSON. Ao importar, reconfigure HubSpot OAuth, Google CSE, OpenAI e Airtable PAT na mão.",
-      "Workspace original: Joana Personal (joana@vendemais.com) — PRECISA MIGRAR p/ conta corporativa.",
-      "Plano Make Free: 1.000 ops/mês — já estoura. Subir p/ Starter no orçamento aprovado."
-    ]
-  }
 }
