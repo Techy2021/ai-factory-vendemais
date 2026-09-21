@@ -1,0 +1,68 @@
+name: CD Make
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - workflows/vendemais-make-blueprint.json
+
+jobs:
+  sync-blueprint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Update Make scenario
+        env:
+          MAKE_API_KEY: ${{ secrets.MAKE_API_KEY }}
+          BRAVE_SEARCH_API_KEY: ${{ secrets.BRAVE_SEARCH_API_KEY }}
+          MAKE_SCENARIO_ID: ${{ vars.MAKE_SCENARIO_ID }}
+          MAKE_REGION: ${{ vars.MAKE_REGION }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          api_key = os.environ.get('MAKE_API_KEY', '')
+          brave_search_api_key = os.environ.get('BRAVE_SEARCH_API_KEY', '')
+          scenario_id = os.environ.get('MAKE_SCENARIO_ID', '')
+          region = os.environ.get('MAKE_REGION', '')
+          if not api_key or not scenario_id.isdecimal() or not re.fullmatch(r'(eu|us)[12]', region):
+              sys.exit('Missing or invalid Make configuration.')
+          if not brave_search_api_key:
+              sys.exit('Missing Brave Search configuration.')
+
+          blueprint = Path('workflows/vendemais-make-blueprint.json').read_text(encoding='utf-8')
+          if 'BRAVE_SEARCH_API_KEY' not in blueprint:
+              sys.exit('Brave Search placeholder not found in blueprint.')
+          blueprint = blueprint.replace('BRAVE_SEARCH_API_KEY', brave_search_api_key)
+          json.loads(blueprint)
+          body = json.dumps({'blueprint': blueprint}).encode('utf-8')
+          url = f'https://{region}.make.com/api/v2/scenarios/{scenario_id}'
+          request = urllib.request.Request(
+              url,
+              data=body,
+              headers={
+                  'Authorization': f'Token {api_key}',
+                  'Content-Type': 'application/json',
+              },
+              method='PATCH',
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  if response.status != 200:
+                      sys.exit(f'Make API returned HTTP {response.status}.')
+          except urllib.error.HTTPError as error:
+              sys.exit(f'Make API returned HTTP {error.code}.')
+          except urllib.error.URLError:
+              sys.exit('Make API request failed.')
+          print('Make scenario blueprint updated.')
+          PY
