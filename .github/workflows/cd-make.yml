@@ -1,6 +1,7 @@
 name: CD Make
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -40,29 +41,82 @@ jobs:
           if not brave_search_api_key:
               sys.exit('Missing Brave Search configuration.')
 
-          blueprint = Path('workflows/vendemais-make-blueprint.json').read_text(encoding='utf-8')
-          if 'BRAVE_SEARCH_API_KEY' not in blueprint:
-              sys.exit('Brave Search placeholder not found in blueprint.')
-          blueprint = blueprint.replace('BRAVE_SEARCH_API_KEY', brave_search_api_key)
-          json.loads(blueprint)
-          body = json.dumps({'blueprint': blueprint}).encode('utf-8')
-          url = f'https://{region}.make.com/api/v2/scenarios/{scenario_id}'
-          request = urllib.request.Request(
-              url,
-              data=body,
-              headers={
-                  'Authorization': f'Token {api_key}',
-                  'Content-Type': 'application/json',
-              },
-              method='PATCH',
-          )
+          # Keep secrets in parsed values, never substitute into raw JSON text.
           try:
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  if response.status != 200:
-                      sys.exit(f'Make API returned HTTP {response.status}.')
-          except urllib.error.HTTPError as error:
-              sys.exit(f'Make API returned HTTP {error.code}.')
-          except urllib.error.URLError:
-              sys.exit('Make API request failed.')
-          print('Make scenario blueprint updated.')
+              blueprint = json.loads(Path('workflows/vendemais-make-blueprint.json').read_text(encoding='utf-8'))
+          except (OSError, ValueError):
+              sys.exit('Cannot read a valid local blueprint JSON.')
+
+          def validate_blueprint(value, source):
+              if not isinstance(value, dict) or not isinstance(value.get('flow'), list) or not isinstance(value.get('metadata'), dict):
+                  sys.exit(f'{source}: expected a blueprint object with flow and metadata.')
+
+          validate_blueprint(blueprint, 'Local blueprint')
+          replacements = 0
+
+          def inject_secret(value):
+              global replacements
+              if isinstance(value, dict):
+                  return {key: inject_secret(item) for key, item in value.items()}
+              if isinstance(value, list):
+                  return [inject_secret(item) for item in value]
+              if isinstance(value, str):
+                  replacements += value.count('BRAVE_SEARCH_API_KEY')
+                  return value.replace('BRAVE_SEARCH_API_KEY', brave_search_api_key)
+              return value
+
+          blueprint = inject_secret(blueprint)
+          if not replacements:
+              sys.exit('Brave Search placeholder not found in blueprint values.')
+
+          url = f'https://{region}.make.com/api/v2/scenarios/{scenario_id}'
+          headers = {
+              'Authorization': f'Token {api_key}',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'User-Agent': 'VendeMais-CD/1.0 (GitHub Actions)',
+          }
+
+          # Refuse redirects so credentials cannot be forwarded to another URL.
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          client = urllib.request.build_opener(NoRedirect)
+
+          def request_make(method, endpoint, payload=None):
+              request = urllib.request.Request(endpoint, data=payload, headers=headers, method=method)
+              try:
+                  with client.open(request, timeout=30) as response:
+                      if response.status != 200:
+                          sys.exit(f'{method}: Make API returned HTTP {response.status}.')
+                      return response.read()
+              except urllib.error.HTTPError as error:
+                  # Never print response bodies: they may echo the blueprint/secrets.
+                  detail = error.read(65536).decode('utf-8', errors='replace')
+                  message = f'{method}: Make API returned HTTP {error.code}.'
+                  if error.code == 403 and re.search(r'error code:\s*1010\b', detail, re.IGNORECASE):
+                      message += ' Error 1010: probable Cloudflare client-signature block; contact Make support.'
+                  ray = error.headers.get('CF-Ray', '')
+                  if re.fullmatch(r'[a-fA-F0-9]{16,32}-[A-Za-z]{3}', ray):
+                      message += f' CF-Ray: {ray}.'
+                  sys.exit(message + ' No automatic retry was performed.')
+              except (urllib.error.URLError, TimeoutError, OSError):
+                  sys.exit(f'{method}: network failure; if PATCH was sent, verify Make before retrying.')
+
+          # GET wraps the blueprint in response.blueprint; do not PATCH that envelope
+          # (scheduling, idSequence, etc.). Preserve all local blueprint fields.
+          try:
+              current = json.loads(request_make('GET', url + '/blueprint'))
+              reference = current['response']['blueprint']
+              if isinstance(reference, str):
+                  reference = json.loads(reference)
+          except (ValueError, KeyError, TypeError):
+              sys.exit('GET: unexpected blueprint response structure; no PATCH sent.')
+          validate_blueprint(reference, 'Remote blueprint')
+
+          # Make requires a JSON string inside the outer JSON request object.
+          body = json.dumps({'blueprint': json.dumps(blueprint, separators=(',', ':'))}, separators=(',', ':')).encode('utf-8')
+          request_make('PATCH', url, body)
+          print('Make scenario blueprint updated (HTTP 200; one PATCH, no retry).')
           PY
