@@ -58,7 +58,7 @@
         "resource": "chat",
         "operation": "create",
         "model": "gpt-5.4-mini",
-        "apiKey": "sk-EXEMPLO-PESSOAL-JOANA-NAO-USAR-EM-PROD-9z8y7x6w5v4u3t2s1r0q",
+        "apiKey": "OPENAI_API_KEY_EXAMPLE",
         "messages": {
           "values": [
             {
