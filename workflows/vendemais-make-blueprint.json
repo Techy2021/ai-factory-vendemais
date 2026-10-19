@@ -2095,13 +2095,31 @@
             }
         },
         {
+            "id": 29,
+            "module": "util:SetVariable2",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "name": "sanitized_search",
+                "scope": "roundtrip",
+                "value": "{{replace(replace(replace(replace(replace(toJSON(8.data); \"/\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi\"; \"[EMAIL]\"); \"/(^|[^0-9])(?:[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9]{2}|[0-9]{11})(?![0-9])/g\"; \"$1[CPF_OU_NUMERO_PESSOAL]\"); \"/(^|[^0-9])(?:\\+55[ .-]?)?(?:\\([1-9][0-9]\\)[ .-]?|[1-9][0-9][ .-]?)[0-9]{4,5}[ .-]?[0-9]{4}(?![0-9])/g\"; \"$1[TELEFONE]\"); \"/(^|[^0-9])(?:[0-9]{4,5}-[0-9]{4})(?![0-9])/g\"; \"$1[TELEFONE]\"); \"/((?:[Nn]ome completo|[Cc]ontato|[Rr]espons\\u00e1vel|[Rr]esponsavel|[Ff]ull name)[ ]*:[ ]*)[A-Z\\u00c0-\\u00d6\\u00d8-\\u00de][a-z\\u00e0-\\u00f6\\u00f8-\\u00ff]+(?:[ ]+(?:(?:da|de|do|das|dos)[ ]+)?[A-Z\\u00c0-\\u00d6\\u00d8-\\u00de][a-z\\u00e0-\\u00f6\\u00f8-\\u00ff]+){1,5}(?=$|[.,;!?\\r\\n\\\"\\\\])/g\"; \"$1[NOME]\")}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 450,
+                    "y": -1,
+                    "name": "Sanitizar PII antes do Gemini"
+                }
+            }
+        },
+        {
             "id": 18,
             "module": "gemini-ai:simpleTextPrompt",
             "version": 1,
             "parameters": {},
             "mapper": {
                 "model": "gemini-2.5-flash",
-                "textPrompt": "{{8.data}}{{8.data.web}}{{8.data.web.results}}Analise os resultados de busca abaixo e retorne SOMENTE um JSON válido com os campos:\r\n\r\nindustry\r\nsize_employees\r\ntech_stack\r\nbuying_signals\r\nicp_match_score\r\ntalking_points\r\n\r\nRegras:\r\n- icp_match_score deve ser um número inteiro de 0 a 100.\r\n- tech_stack deve ser uma lista.\r\n- Não invente informações que não estejam sustentadas pelos resultados.\r\n- Quando não houver informação suficiente, use null.\r\n- Não escreva explicações fora do JSON.\r\n\r\nResultados da busca:\n\nIMPORTANTE:\nRetorne apenas o objeto JSON puro.\nNão use blocos Markdown.\nNão use ```json.\nNão use ```.\nNão escreva nenhum texto antes ou depois do JSON.\nA resposta deve começar com { e terminar com }."
+                "textPrompt": "{{29.sanitized_search}}Analise os resultados de busca abaixo e retorne SOMENTE um JSON válido com os campos:\r\n\r\nindustry\r\nsize_employees\r\ntech_stack\r\nbuying_signals\r\nicp_match_score\r\ntalking_points\r\n\r\nRegras:\r\n- icp_match_score deve ser um número inteiro de 0 a 100.\r\n- tech_stack deve ser uma lista.\r\n- Não invente informações que não estejam sustentadas pelos resultados.\r\n- Quando não houver informação suficiente, use null.\r\n- Não escreva explicações fora do JSON.\r\n\r\nResultados da busca:\n\nIMPORTANTE:\nRetorne apenas o objeto JSON puro.\nNão use blocos Markdown.\nNão use ```json.\nNão use ```.\nNão escreva nenhum texto antes ou depois do JSON.\nA resposta deve começar com { e terminar com }."
             },
             "metadata": {
                 "designer": {

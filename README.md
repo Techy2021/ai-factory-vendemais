@@ -1,109 +1,123 @@
-# VendeMais ? Enriquecimento de leads
+# VendeMais — README v1.0
 
-O VendeMais apoia o time comercial na qualifica??o de oportunidades B2B. O projeto consulta informa??es p?blicas sobre empresas, usa um LLM para gerar dados de enriquecimento, registra o resultado no Airtable e atualiza o score de ader?ncia ao perfil de cliente ideal (`icp_match_score`) no HubSpot.
+Enriquecimento de oportunidades B2B com Brave Search e Gemini, registro no Airtable e atualização do `icp_match_score` no HubSpot. Make é a plataforma escolhida para produção; n8n apoia testes locais e aprendizado.
 
-## Fluxo final da Etapa 1
+**Estado:** a Etapa 1 registra sincronização do blueprint pela Make API, sem comprovar o estado remoto atual ou a homologação integrada. Sanitização está no blueprint local, sem deploy comprovado; observabilidade e otimização são locais. Ativação da retenção e execução integrada/agendamento em produção permanecem pendentes.
 
-**HubSpot ? Brave Search ? Gemini ? JSON ? Airtable ? HubSpot**
+## Fluxo e arquitetura
 
-O [blueprint versionado](workflows/vendemais-make-blueprint.json) cont?m seis m?dulos:
+**HubSpot → Brave Search → sanitização → Gemini → parsing JSON → Airtable → HubSpot**
 
-1. **HubSpot:** observa neg?cios atualizados no est?gio `appointmentscheduled`.
-2. **Brave Search:** consulta informa??es sobre a empresa por HTTP.
-3. **Gemini:** analisa os dados e gera a resposta de enriquecimento.
-4. **JSON:** faz o parsing da resposta para disponibilizar os campos aos pr?ximos m?dulos.
-5. **Airtable:** cria um registro com os dados enriquecidos.
-6. **HubSpot:** atualiza o neg?cio com o `icp_match_score`.
+O [blueprint atual](workflows/vendemais-make-blueprint.json) contém sete módulos, incluindo o sanitizador da Etapa 2.2D. O Gemini solicita `industry`, `size_employees`, `tech_stack`, `buying_signals`, `icp_match_score` e `talking_points`; score inteiro de 0 a 100 ou `null` por insuficiência de informação.
 
-## Arquitetura e documenta??o
+- [Decisão de stack](docs/matriz-decisao-stack.md), [ADR-001](docs/adr/ADR-001-escolha-da-stack.md) e [ADR-002](docs/adr/ADR-002-ambiente-de-producao.md).
+- C4: [contexto](docs/architecture/c4-contexto.md) e [containers](docs/architecture/c4-containers.md).
+- [Schema Airtable](docs/airtable-schema.md), [auditoria](docs/auditoria-prototipo.md), [notas históricas](docs/notas-joana.md) e [smoke tests](docs/smoke-tests.md).
 
-A arquitetura escolhida ? a **Stack C**, baseada em servi?os SaaS e integra??es de baixo c?digo. O **Make ? o ambiente escolhido para produ??o**, com contas e credenciais corporativas. O n8n permanece como apoio para testes locais e aprendizado.
+Parte desses documentos e o [mirror n8n](n8n-mirror/README.md) ainda descrevem Google Search/OpenAI do protótipo; não validam a integração Brave/Gemini. O blueprint e os guias específicos das etapas registram a implementação atual.
 
-- [Auditoria do prot?tipo](docs/auditoria-prototipo.md)
-- [Matriz de decis?o de stack](docs/matriz-decisao-stack.md)
-- [ADR-001 ? Escolha da stack](docs/adr/ADR-001-escolha-da-stack.md)
-- [ADR-002 ? Ambiente de produ??o](docs/adr/ADR-002-ambiente-de-producao.md)
-- [C4 ? Contexto](docs/architecture/c4-contexto.md)
-- [C4 ? Containers](docs/architecture/c4-containers.md)
-- [Schema do Airtable](docs/airtable-schema.md)
-- [Smoke tests da Etapa 1](docs/smoke-tests.md)
+## Segurança e credenciais
 
-A auditoria, o contexto do ADR-001, os diagramas C4 e o mirror n8n ainda cont?m refer?ncias ao prot?tipo com Google Search/OpenAI. A decis?o de usar Make permanece v?lida, mas essas refer?ncias aos provedores precisam ser atualizadas para refletir Brave Search/Gemini. Para o fluxo implementado, consulte o blueprint versionado e a sequ?ncia descrita acima.
+O [.env.example](.env.example) lista nomes sem valores. `.env` local é opcional, deve conter apenas credenciais de desenvolvimento e está coberto pelo [.gitignore](.gitignore), que não protege arquivos já rastreados. `.env` não é carregado automaticamente pelo CD, Compose ou script de retenção. Nunca versione chaves, exportações com secrets ou logs com credenciais.
 
-## Executar e testar
+| Armazenamento | Configuração atual |
+| --- | --- |
+| GitHub Actions Secrets do CD | `MAKE_API_KEY`, `BRAVE_SEARCH_API_KEY` |
+| GitHub Actions Variables do CD | `MAKE_SCENARIO_ID`, `MAKE_REGION` (`eu1`, `eu2`, `us1` ou `us2`) |
+| Conexões corporativas Make | Gemini, HubSpot OAuth e Airtable PAT; não há `GEMINI_API_KEY` local consumida pelo projeto |
+| Retenção, separada do CD | Secret/ambiente do processo `AIRTABLE_RETENTION_PAT`; Variables do workflow `AIRTABLE_RETENTION_BASE_ID` e `AIRTABLE_RETENTION_TABLE_ID` |
 
-### Testes locais
+Mantenha inventário/responsáveis no cofre corporativo, acesso mínimo e credenciais distintas por ambiente. O CD usa configuração do repositório, sem isolamento automatizado por GitHub Environment; homologação exige cenário/conexões separados.
 
-Na raiz do reposit?rio, com Python 3.11 ou compat?vel, execute:
+**Rotação:** a cada 90 dias ou antes por exigência do provedor, mudança de acesso ou suspeita de exposição. Gere a substituta, atualize cofre/Secrets/conexões, valide e revogue a anterior; em comprometimento confirmado, revogue imediatamente. Atualizar o Secret Brave não troca a chave já publicada: isso requer CD autorizado. Apagar um valor não elimina o histórico Git. Procedimento: [segurança de credenciais](docs/seguranca-credenciais.md).
 
-```bash
-python tests/validate_workflows.py
-python tests/test_enrichment_logic.py
-```
+## LGPD
 
-Os scripts usam a biblioteca padr?o e n?o exigem credenciais nem chamadas externas. S?o 10 verifica??es estruturais dos artefatos Make/n8n e 5 verifica??es de l?gica com LLM simulado, incluindo montagem do prompt, parsing do score e rejei??o de JSON inv?lido. As 15 verifica??es passaram na revis?o desta entrega.
+O [mapa de dados](docs/lgpd-mapa-dados.md) inventaria origem, finalidade, destinatários, categorias e papéis por inspeção estática. Dados exclusivamente empresariais não exigem base legal de dados pessoais; texto livre e associação a pessoas podem mudar esse enquadramento.
 
-Os [smoke tests documentados](docs/smoke-tests.md) cobrem estrutura do blueprint, conex?es do mirror e leitura de um resultado simulado. Esses testes n?o comprovam a execu??o real do Gemini, a integra??o entre os servi?os ou o sucesso do deploy.
+**Bases legais:** legítimo interesse é hipótese candidata para dados pessoais comuns na qualificação B2B, condicionada à finalidade, necessidade, expectativas e teste de balanceamento ainda pendente. Consentimento não foi adotado; contrato e obrigação legal não foram presumidos. Não há fundamento documentado para dados sensíveis nem aprovação jurídica comprovada do tratamento.
 
-### Teste no Make
+**Transferência internacional:** potencial/não confirmada em HubSpot, Make, Brave, Gemini e Airtable. Países, suboperadores, contratos/DPA e mecanismo aplicável não estão comprovados; `country=BR` não garante residência. A base legal do tratamento não resolve, por si só, o mecanismo de transferência.
 
-1. Use o ambiente corporativo do Make e importe [workflows/vendemais-make-blueprint.json](workflows/vendemais-make-blueprint.json) em um cen?rio de teste.
-2. Configure ou remapeie as conex?es do HubSpot, Gemini e Airtable. Revise a base, a tabela e os campos de destino: refer?ncias exportadas n?o garantem acesso no novo ambiente.
-3. Para importa??o manual, configure a chave Brave Search diretamente no m?dulo HTTP do Make, substituindo o placeholder `BRAVE_SEARCH_API_KEY` apenas no cen?rio. N?o grave a chave no arquivo versionado.
-4. Com o agendamento desativado durante o teste, prepare um neg?cio de teste no est?gio esperado e execute **Run once**.
-5. Confira a execu??o dos seis m?dulos, o JSON interpretado, o registro criado no Airtable e o score atualizado no HubSpot. Esse teste usa APIs reais e grava dados nos sistemas conectados.
+**Retenção e exclusão:** política interna de até 30 dias para busca bruta e históricos/prompts; até 180 dias para enriquecimento e vínculo no Airtable; CRM ativo com revisão a cada 180 dias e até 180 dias após encerramento; backups até 90 dias após exclusão ativa. Não são prazos legais presumidos. O [procedimento de retenção](docs/retencao-exclusao.md) implementa limpeza bruta Airtable em 30 dias e exclusão quando criação e enriquecimento têm ao menos 180 dias, além de configuração de poda do mirror n8n. Workflow existe, mas ativação/exclusão remota e poda real não foram comprovadas. HubSpot, históricos Make/Brave/Gemini e backups não são limpos por essa rotina.
 
-A ativa??o e o agendamento devem ser conferidos no Make; o blueprint local n?o comprova o estado atual do cen?rio remoto.
+**PII antes do Gemini:** o módulo 29 serializa toda a resposta Brave e mascara e-mail, padrões de telefone/CPF e nomes com rótulos, sem fallback bruto no prompt. As [regras de sanitização](docs/pii-sanitizacao.md) foram testadas localmente com dados sintéticos; o interpretador Make requer validação em homologação. Não garantem anonimização nem filtram prompt injection. Consulta Brave, cópia bruta Airtable e históricos Make continuam fora dessa proteção.
 
-### Apoio local com n8n
+## Observabilidade local
 
-Com Docker e Docker Compose instalados:
+O [guia de observabilidade](docs/observabilidade.md) descreve o trace **`vendemais.enrichment`**, por tentativa, com IDs técnicos aleatórios e seis spans: `hubspot.read`, `brave.search`, `pii.sanitize`, `gemini.generate` (inclui parsing), `airtable.write` e `hubspot.update`. A implementação local usa callbacks; não instrumenta automaticamente o Make remoto.
 
-```bash
-cd n8n-mirror
-docker compose up -d
-```
-
-Abra `http://localhost:5678` e importe `n8n-mirror/workflows/vendemais-enrich-local.json`, selecionando o arquivo a partir da raiz do reposit?rio. Essa vers?o usa servi?os simulados e permite exercitar o fluxo sem credenciais externas. Consulte o [guia do mirror](n8n-mirror/README.md) para disparar o webhook e inspecionar a execu??o.
-
-O mirror conserva a estrutura do prot?tipo anterior; n?o valida a integra??o atual Brave Search/Gemini.
-
-## CI com GitHub Actions
-
-O workflow [ci.yml](.github/workflows/ci.yml) executa os dois scripts de teste em pushes e pull requests, usando Python 3.11. Falhas nos scripts fazem o job falhar. A CI verifica os artefatos e a l?gica local, sem acessar as APIs de produ??o.
-
-## CD com GitHub Actions e Make API
-
-O workflow [cd-make.yml](.github/workflows/cd-make.yml) atualiza um cen?rio existente no Make. Ele ? acionado por altera??es no blueprint enviadas ? branch `main` ou manualmente por **Actions ? CD Make ? Run workflow**.
-
-Configure em **Settings ? Secrets and variables ? Actions**:
-
-| Tipo | Nome | Uso |
+| Métrica | Janela | Threshold existente |
 | --- | --- | --- |
-| Secret | `MAKE_API_KEY` | Autentica??o da API Make para leitura e atualiza??o do cen?rio. |
-| Secret | `BRAVE_SEARCH_API_KEY` | Substitui??o do placeholder da busca durante o deploy. |
-| Variable | `MAKE_SCENARIO_ID` | Identifica??o do cen?rio de destino, sem publicar seu valor na documenta??o. |
-| Variable | `MAKE_REGION` | Regi?o do ambiente Make: `eu1`, `eu2`, `us1` ou `us2`. |
+| Latência p95 | 1h | > 60 s, mínimo 20 tentativas |
+| Taxa de erro | 1h | > 5%, mínimo 20 tentativas |
+| Custo médio | 24h | > US$ 0,03/tentativa, mínimo 20 e custos completos conciliados |
+| Volume de sucessos | 1h | < 1, com demanda pendente e operação ativa confirmadas |
+| Qualidade estrutural | 24h | < 95%, mínimo 20 tentativas que chegaram ao Gemini |
 
-As demais credenciais de integra??o s?o configuradas nas conex?es do Make. N?o inclua chaves ou tokens no README, no blueprint ou nos logs.
+Estados: `ok`, `alert` e `insufficient_data`. Qualidade mede contrato estrutural, não veracidade. Custo é avaliado entre 09:00 e 09:04:59 de São Paulo (12:00 UTC); custos sintéticos só são aceitos com `--synthetic`. Volume requer `--pending --active`; janela vazia só vira zero com confirmação adicional `--telemetry-complete`.
 
-O CD l? o blueprint local e substitui o placeholder Brave Search **somente em mem?ria**. Antes do envio, consulta `GET /scenarios/{id}/blueprint` e valida a estrutura remota, aceitando objeto ou string JSON. Em seguida, faz um ?nico `PATCH /scenarios/{id}`, com o campo `blueprint` serializado como string JSON dentro do corpo JSON da requisi??o.
+**P2:** apenas a taxa de erro gera eventos, após duas avaliações consecutivas válidas de cinco minutos. Há lembrete após 60 minutos ainda em violação e recuperação após duas avaliações válidas com taxa ≤ 5%. A entrega funcional é `logs/thresholds/alerts.jsonl` (`opened`, `reminder`, `resolved`); Slack é canal pretendido, sem configuração ou envio.
 
-O workflow n?o imprime o payload nem o corpo das respostas de erro. Em falhas, informa o status HTTP e, quando dispon?veis, o diagn?stico 1010 e o identificador `CF-Ray`. N?o h? retry autom?tico. Em caso de timeout ap?s o PATCH, confira o cen?rio no Make antes de repetir.
+Na raiz, com Python 3.11 ou compatível, sem instalar pacotes:
 
-CI e CD s?o workflows independentes: o CD atual n?o aguarda automaticamente a conclus?o da CI. Confira os testes antes de disparar o deploy. O CD atualiza o blueprint; n?o executa o cen?rio nem configura seu agendamento.
+```powershell
+# Demonstração sintética: acrescenta uma tentativa ao JSONL local.
+python scripts/local_observability.py
+# Avaliação local: persiste avaliação e estado P2, sem Slack.
+python scripts/threshold_alerts.py --synthetic
+# Snapshot: não altera as fontes nem avança o ciclo P2.
+python scripts/observability_dashboard.py
+Start-Process logs/dashboard.html
+```
 
-## Status da Etapa 1
+O [dashboard](docs/dashboard-observabilidade.md) lê `logs/observability.jsonl` e `logs/thresholds/alerts.jsonl`, mostra cinco métricas e os últimos 20 eventos P2 até a referência. `logs/dashboard.html` é artefato local ignorado pelo Git; execute novamente e recarregue para atualizar. Em outros sistemas, abra o arquivo no navegador. O painel sinaliza custos marcados como sintéticos; o schema não comprova a origem completa dos traces ou eventos P2.
 
-- Objetivo, decis?o de stack, ambiente de produ??o, ADRs, diagramas C4 e smoke tests est?o documentados, com a defasagem dos provedores indicada acima.
-- O blueprint dos seis m?dulos est? versionado com o fluxo Brave Search/Gemini.
-- Os 15 testes locais passaram e a CI foi executada com sucesso no GitHub Actions.
-- O CD Make foi executado com sucesso pela branch `main`, com credenciais via GitHub Secrets, serialização do blueprint e validação de erros.
-- O blueprint foi sincronizado pela Make API e o cenário foi verificado no Make após o deploy, com os seis módulos e os principais mapeamentos preservados.
-- **Pendente de evid?ncia:** execu??o integrada do fluxo final e confirma??o do agendamento em produ??o. Os testes locais n?o substituem essa valida??o.
+## Otimização medida do payload Gemini
 
-O reposit?rio re?ne os artefatos da Etapa 1 e registra as limita??es conhecidas. A opera??o em produ??o n?o deve ser considerada homologada apenas com base nos testes locais.
+O [preparador local](scripts/gemini_payload.py) recebe JSON já sanitizado, seleciona título, URL, descrição e snippets de `web.results`, com limites por campo. Mantém ordem, modelo e instruções. **Não está conectado ao Make**, cujo blueprint não foi alterado pela Etapa 2.4.
 
-## D?vida t?cnica herdada
+| Soma dos quatro cenários sintéticos | Antes | Depois |
+| --- | ---: | ---: |
+| Caracteres do prompt completo | 29.001 | 9.808 |
+| Tokens estimados (`ceil(caracteres / 4)`, por prompt) | 7.251 | 2.453 |
 
-A [auditoria](docs/auditoria-prototipo.md) e as [notas do prot?tipo](docs/notas-joana.md) registram pontos de evolu??o, como tratamento de falhas, acompanhamento de custos, duplicidade de registros e governan?a de dados. Esses documentos s?o hist?ricos; a exist?ncia de testes e pipelines n?o comprova a resolu??o de todas essas pend?ncias.
+**Redução medida em caracteres: 66,18%.** Dados exclusivamente sintéticos; tokens são heurística, não contagem Gemini. **Custo e latência reais não foram medidos.** O contrato estrutural permaneceu válido nas respostas simuladas, mas truncamento pode eliminar fatos tardios; não há comprovação de não regressão semântica no Gemini. Método e trade-off: [otimização](docs/otimizacao-payload-gemini.md) e [relatório A/B](docs/gemini-payload-medicao.json).
+
+```powershell
+python scripts/measure_gemini_payload.py
+```
+
+## Troubleshooting
+
+| Sintoma | Verificação e ação |
+| --- | --- |
+| Dashboard sem dados | Confira caminhos JSONL, referência e janelas de 1h/24h. Logs antigos ficam fora das métricas. Execute o gerador novamente; a demo acima cria apenas dados sintéticos. Para histórico, use `--at` com ISO 8601 e fuso, conforme o guia. JSONL inválido interrompe a geração; um HTML anterior continua sendo snapshot antigo. |
+| `insufficient_data` | Leia o motivo no cartão. Verifique amostra mínima, conciliação/horário do custo, demanda/operação e cobertura da coleta. Uma tentativa da demo não atende ao mínimo 20. Não declare `--telemetry-complete` sem evidência nem transforme ausência em zero. |
+| P2 não dispara | O dashboard não dispara alertas. Execute o avaliador, por exemplo `python scripts/threshold_alerts.py --watch --synthetic` para demonstração, e confira `evaluations.jsonl`/`state.json`. Exige taxa > 5%, amostra ≥ 20 e duas avaliações válidas consecutivas em intervalos de cinco minutos; lacunas ou dados insuficientes interrompem a sequência. Uma execução isolada não basta. O canal é JSONL, não Slack. |
+| Retenção falha | Confira `AIRTABLE_RETENTION_PAT` no ambiente do processo, escopos `data.records:read/write`, acesso à base/tabela e IDs de campos. Datas ausentes/inválidas/futuras impedem ações. Use primeiro o modo padrão sem `--apply`, que ainda consulta a API. Em falha, pode haver alterações parciais: confira o estado remoto antes de repetir; não há rollback automático. Veja o procedimento de retenção. |
+| Sanitização falha ou deixa PII | Execute o teste abaixo e confira módulo 29 e referência a `29.sanitized_search` no prompt. O teste também compara com `HEAD`; mudança de versão-base pode exigir revisão dessa expectativa, não remoção automática do controle. Valide a expressão em homologação; formatos fora das regex podem permanecer. Não contorne a falha enviando `8.data` bruto ao Gemini. |
+| Variáveis/secrets não funcionam | Confirme nomes e armazenamento da tabela de credenciais; preencher `.env` não injeta variáveis nos processos atuais. Gemini usa conexão Make. Atualizar o Secret Brave não muda o cenário publicado. Verifique ambiente, permissões e conexão sem imprimir valores ou exportar secrets. |
+
+### Testes direcionados
+
+Execute apenas o comando correspondente à área investigada, na raiz. Python usa biblioteca padrão; sanitização requer Node.js 18+ e Git. Dados/clientes são simulados, sem comprovar comportamento remoto.
+
+```powershell
+python tests/test_local_observability.py
+python tests/test_threshold_alerts.py
+python tests/test_observability_dashboard.py
+python tests/test_retention_cleanup.py
+node tests/test_pii_sanitization.cjs
+python tests/test_gemini_payload.py
+```
+
+## CI, CD e validação remota pendente
+
+A [CI](.github/workflows/ci.yml) executa `tests/validate_workflows.py` e `tests/test_enrichment_logic.py` com Python 3.11 em push/PR; não inclui automaticamente os testes direcionados acima. A [CD Make](.github/workflows/cd-make.yml) atualiza cenário existente por mudanças no blueprint na `main` ou disparo manual. Injeta Brave em memória, consulta/valida o blueprint remoto e envia um `PATCH` com blueprint serializado. Não executa cenário nem configura agendamento; CI e CD são independentes.
+
+Em falhas de CD, confira status HTTP, diagnóstico 1010 e `CF-Ray` quando disponíveis; não há retry automático. Em timeout após `PATCH`, confira o cenário antes de repetir. Retenção usa [workflow separado](.github/workflows/retention.yml), sem ativação comprovada.
+
+Para homologar, use cenário corporativo separado e agendamento desativado; importe o blueprint, remapeie conexões e valide base/tabela/campos. Na importação manual, substitua `BRAVE_SEARCH_API_KEY` somente no módulo HTTP remoto. Uma execução **Run once** deve comprovar os sete módulos, parsing, gravação Airtable e atualização HubSpot. Usa APIs reais, grava dados e pode gerar custo; não foi realizada nesta revisão documental.
+
+Permanecem declarados: execução integrada/agendamento em produção; validação e deploy remoto da sanitização; teste de balanceamento e contratos/transferências; cobertura/ativação da retenção; conectores, telemetria e custo conciliado reais; entrega Slack; ativação e avaliação real da otimização. Nenhuma função local ou teste sintético, isoladamente, homologa produção.

@@ -1,0 +1,39 @@
+name: Retention cleanup
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Aplicar limpeza irreversível (false = dry-run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: retention-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply retention policy
+        env:
+          AIRTABLE_RETENTION_PAT: ${{ secrets.AIRTABLE_RETENTION_PAT }}
+          RETENTION_BASE_ID: ${{ vars.AIRTABLE_RETENTION_BASE_ID }}
+          RETENTION_TABLE_ID: ${{ vars.AIRTABLE_RETENTION_TABLE_ID }}
+          APPLY_RETENTION: ${{ github.event_name == 'schedule' || inputs.apply }}
+        run: |
+          args=(--base-id "$RETENTION_BASE_ID" --table-id "$RETENTION_TABLE_ID")
+          if [ "$APPLY_RETENTION" = "true" ]; then
+            args+=(--apply)
+          fi
+          python scripts/retention_cleanup.py "${args[@]}"

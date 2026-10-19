@@ -24,6 +24,13 @@ services:
       # Menos atrito no curso: desliga telemetria e o questionario de onboarding.
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_PERSONALIZATION_ENABLED=false
+      # Retenção local: podar históricos concluídos após 30 dias (720 horas).
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=720
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=0
+      - EXECUTIONS_DATA_HARD_DELETE_BUFFER=0
+      - EXECUTIONS_DATA_PRUNE_SOFT_DELETE_INTERVAL=1
+      - EXECUTIONS_DATA_PRUNE_HARD_DELETE_INTERVAL=1
     volumes:
       - n8n_data:/home/node/.n8n
 

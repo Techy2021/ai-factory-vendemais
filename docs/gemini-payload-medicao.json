@@ -1,0 +1,91 @@
+{
+  "synthetic": true,
+  "method": "Same sanitized fixture and current blueprint instructions in each A/B pair.",
+  "token_method": "ceil(prompt Unicode characters / 4); heuristic, not Gemini tokenizer.",
+  "cost_usd": null,
+  "cost_note": "No verified tariff or billed token count. For input tariff R USD/million: estimated tokens * R / 1e6. Excludes output, reasoning, cache and other services.",
+  "latency_ms": null,
+  "latency_note": "No API calls; local string processing does not estimate Gemini latency.",
+  "quality_note": "Input-sensitive mock only. No measured Gemini response quality or semantic non-regression claim.",
+  "cases": [
+    {
+      "case": "metadata_heavy",
+      "before": {
+        "prompt_characters_measured": 8199,
+        "prompt_utf8_bytes_measured": 8267,
+        "mapper_json_utf8_bytes_measured": 8637,
+        "input_tokens_estimated_chars_div_4": 2050
+      },
+      "after": {
+        "prompt_characters_measured": 2361,
+        "prompt_utf8_bytes_measured": 2423,
+        "mapper_json_utf8_bytes_measured": 2601,
+        "input_tokens_estimated_chars_div_4": 591
+      },
+      "prompt_character_reduction_percent": 71.2,
+      "mock_structural_valid_before": true,
+      "mock_structural_valid_after": true,
+      "mock_response_equal": true
+    },
+    {
+      "case": "long_descriptions",
+      "before": {
+        "prompt_characters_measured": 19286,
+        "prompt_utf8_bytes_measured": 19603,
+        "mapper_json_utf8_bytes_measured": 19901,
+        "input_tokens_estimated_chars_div_4": 4822
+      },
+      "after": {
+        "prompt_characters_measured": 5931,
+        "prompt_utf8_bytes_measured": 6073,
+        "mapper_json_utf8_bytes_measured": 6251,
+        "input_tokens_estimated_chars_div_4": 1483
+      },
+      "prompt_character_reduction_percent": 69.25,
+      "mock_structural_valid_before": true,
+      "mock_structural_valid_after": true,
+      "mock_response_equal": true
+    },
+    {
+      "case": "minimal",
+      "before": {
+        "prompt_characters_measured": 824,
+        "prompt_utf8_bytes_measured": 845,
+        "mapper_json_utf8_bytes_measured": 941,
+        "input_tokens_estimated_chars_div_4": 206
+      },
+      "after": {
+        "prompt_characters_measured": 824,
+        "prompt_utf8_bytes_measured": 845,
+        "mapper_json_utf8_bytes_measured": 941,
+        "input_tokens_estimated_chars_div_4": 206
+      },
+      "prompt_character_reduction_percent": 0.0,
+      "mock_structural_valid_before": true,
+      "mock_structural_valid_after": true,
+      "mock_response_equal": true
+    },
+    {
+      "case": "empty",
+      "before": {
+        "prompt_characters_measured": 692,
+        "prompt_utf8_bytes_measured": 709,
+        "mapper_json_utf8_bytes_measured": 797,
+        "input_tokens_estimated_chars_div_4": 173
+      },
+      "after": {
+        "prompt_characters_measured": 692,
+        "prompt_utf8_bytes_measured": 709,
+        "mapper_json_utf8_bytes_measured": 797,
+        "input_tokens_estimated_chars_div_4": 173
+      },
+      "prompt_character_reduction_percent": 0.0,
+      "mock_structural_valid_before": true,
+      "mock_structural_valid_after": true,
+      "mock_response_equal": true
+    }
+  ],
+  "total_prompt_characters_before": 29001,
+  "total_prompt_characters_after": 9808,
+  "total_prompt_character_reduction_percent": 66.18
+}

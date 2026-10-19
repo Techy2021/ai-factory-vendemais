@@ -1,7 +1,11 @@
 # Env (nunca comitar credencial)
 .env
 .env.local
+.env.*
+*.env
 *.env.backup
+*.env.*
+!.env.example
 
 # n8n (mirror local)
 .n8n/
