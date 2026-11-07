@@ -4,6 +4,7 @@ import { ApiError, fetchDashboard, login, logout } from "./api";
 import type { LeadsResponse, MetricsResponse, Period } from "./api";
 import { applyPeriod as applyQueryPeriod, changePage, formatDateUtc, lastPage } from "./query";
 import type { DashboardQuery } from "./query";
+import { scorePresentation } from "./scorePresentation";
 
 type DashboardState =
   | { status: "loading" | "unauthenticated" | "error" }
@@ -94,6 +95,16 @@ function displayText(value: string | null): string {
   return value?.trim() ? value : "—";
 }
 
+function ScoreBadge({ score }: { score: number | null }) {
+  const { kind, label } = scorePresentation(score);
+  return (
+    <span className={`score-badge score-badge--${kind}`}>
+      {score !== null && <strong>{score.toLocaleString("pt-BR", { maximumFractionDigits: 20 })}</strong>}
+      <span>{label}</span>
+    </span>
+  );
+}
+
 function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -149,6 +160,17 @@ function App() {
   const [draftPeriod, setDraftPeriod] = useState<Period>(query.period);
   const [retry, setRetry] = useState(0);
   const [filterError, setFilterError] = useState("");
+  const [activeSection, setActiveSection] = useState(
+    () => window.location.hash === "#leads" ? "leads" : "visao-geral",
+  );
+
+  useEffect(() => {
+    function syncSection() {
+      setActiveSection(window.location.hash === "#leads" ? "leads" : "visao-geral");
+    }
+    window.addEventListener("hashchange", syncSection);
+    return () => window.removeEventListener("hashchange", syncSection);
+  }, []);
 
   useEffect(() => {
     if (session === "unauthenticated" || session === "logging-out") return;
@@ -237,8 +259,8 @@ function App() {
         <div className="sidebar__navigation">
           <p className="sidebar__label">MENU PRINCIPAL</p>
           <nav aria-label="Navegação principal">
-            <a className="nav-link" href="#visao-geral"><Icon name="grid" />Visão Geral</a>
-            <a className="nav-link" href="#leads"><Icon name="users" />Leads</a>
+            <a className="nav-link" href="#visao-geral" aria-current={activeSection === "visao-geral" ? "location" : undefined}><Icon name="grid" />Visão Geral</a>
+            <a className="nav-link" href="#leads" aria-current={activeSection === "leads" ? "location" : undefined}><Icon name="users" />Leads</a>
           </nav>
         </div>
 
@@ -311,7 +333,7 @@ function App() {
                       <td>{displayText(lead.industry)}</td>
                       <td>{displayText(lead.size_employees)}</td>
                       <td>{lead.tech_stack && lead.tech_stack.length > 0 ? lead.tech_stack.join(", ") : "—"}</td>
-                      <td>{lead.icp_match_score === null ? "—" : lead.icp_match_score.toLocaleString("pt-BR")}</td>
+                      <td><ScoreBadge score={lead.icp_match_score} /></td>
                       <td>{formatDateUtc(lead.enriched_at)}</td>
                     </tr>
                   )) : <tr><td colSpan={6}><TableState state={dashboard.status === "ready" ? "empty" : dashboard.status} /></td></tr>}
