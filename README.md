@@ -2,7 +2,7 @@
 
 Enriquecimento de oportunidades B2B com Brave Search e Gemini, registro no Airtable e atualização do `icp_match_score` no HubSpot. Make é a plataforma escolhida para produção; n8n apoia testes locais e aprendizado.
 
-**Estado:** a Etapa 1 registra sincronização do blueprint pela Make API, sem comprovar o estado remoto atual ou a homologação integrada. Sanitização está no blueprint local, sem deploy comprovado; observabilidade e otimização são locais. Ativação da retenção e execução integrada/agendamento em produção permanecem pendentes.
+**Estado:** o dashboard React, a API FastAPI, o acesso ao Airtable e login/logout foram validados localmente. Filtros e paginação estão implementados; as mudanças posteriores à validação local de dados devem ser conferidas na próxima homologação. Não há publicação ou homologação do dashboard em produção comprovada. A Etapa 1 registra sincronização do blueprint pela Make API, sem comprovar o estado remoto atual ou a homologação integrada. Sanitização está no blueprint local, sem deploy comprovado; observabilidade e otimização são locais. Ativação da retenção e execução integrada/agendamento em produção permanecem pendentes.
 
 ## Fluxo e arquitetura
 
@@ -10,11 +10,120 @@ Enriquecimento de oportunidades B2B com Brave Search e Gemini, registro no Airta
 
 O [blueprint atual](workflows/vendemais-make-blueprint.json) contém sete módulos, incluindo o sanitizador da Etapa 2.2D. O Gemini solicita `industry`, `size_employees`, `tech_stack`, `buying_signals`, `icp_match_score` e `talking_points`; score inteiro de 0 a 100 ou `null` por insuficiência de informação.
 
+O dashboard é um fluxo separado e somente de leitura: **React/Vite → FastAPI → Airtable**. A automação Make é responsável pelo fluxo de enriquecimento e gravação no Airtable/HubSpot; o dashboard não executa nem altera a automação. A API consulta apenas campos autorizados do Airtable e protege leads e métricas com sessão administrativa.
+
 - [Decisão de stack](docs/matriz-decisao-stack.md), [ADR-001](docs/adr/ADR-001-escolha-da-stack.md) e [ADR-002](docs/adr/ADR-002-ambiente-de-producao.md).
 - C4: [contexto](docs/architecture/c4-contexto.md) e [containers](docs/architecture/c4-containers.md).
 - [Schema Airtable](docs/airtable-schema.md), [auditoria](docs/auditoria-prototipo.md), [notas históricas](docs/notas-joana.md) e [smoke tests](docs/smoke-tests.md).
 
 Parte desses documentos e o [mirror n8n](n8n-mirror/README.md) ainda descrevem Google Search/OpenAI do protótipo; não validam a integração Brave/Gemini. O blueprint e os guias específicos das etapas registram a implementação atual.
+
+## Dashboard: execução e configuração
+
+Requisitos: Python 3.11, Node.js com npm compatível com as dependências em
+[`frontend/package.json`](frontend/package.json), acesso à base/tabela Airtable
+e uma senha administrativa fornecida com segurança. O backend usa FastAPI,
+Pydantic e Uvicorn, conforme [`backend/requirements.txt`](backend/requirements.txt).
+
+Variáveis do **processo do backend** (o FastAPI não carrega `.env` automaticamente):
+
+| Variável | Finalidade |
+| --- | --- |
+| `VENDEMAIS_ENV` | `production` por padrão; `development` para documentação e HTTP local. |
+| `AIRTABLE_API_TOKEN` | Token de leitura autorizado à base/tabela. |
+| `AIRTABLE_BASE_ID` | Identificador da base. |
+| `AIRTABLE_TABLE_ID` | Identificador da tabela. |
+| `VENDEMAIS_ADMIN_PASSWORD` | Senha administrativa forte, fornecida por ambiente ou cofre. |
+| `VENDEMAIS_ALLOWED_ORIGIN` | Origem exata permitida para o dashboard; localmente, `http://localhost:5173`. |
+| `VENDEMAIS_COOKIE_SECURE` | `true` por padrão e obrigatório em produção; `false` somente em desenvolvimento com HTTP de loopback local. |
+
+O exemplo [`backend/.env.example`](backend/.env.example) lista as variáveis;
+não coloque credenciais no repositório, em comandos registrados no histórico
+ou em logs. Defina-as no ambiente do processo com um mecanismo apropriado.
+
+No **frontend**, `VITE_API_BASE_URL` é uma origem pública, não um segredo.
+Em desenvolvimento, ausente ou vazia, usa `http://localhost:8001`; HTTP
+explícito só é aceito para loopback. Em produção, ausente ou vazia, usa a
+origem HTTPS atual do navegador; se definida, deve ser uma origem HTTPS
+absoluta, sem credenciais, caminho, consulta ou fragmento. O Vite incorpora o
+valor configurado na aplicação: defina-o antes de gerá-la e reinicie o servidor
+de desenvolvimento após alterações. Veja
+[`frontend/.env.example`](frontend/.env.example) e
+[`frontend/README.md`](frontend/README.md).
+
+Após configurar as variáveis do backend, inicie-o em um terminal PowerShell:
+
+```powershell
+Set-Location 'D:\VendeMais\backend'
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 1 --no-access-log
+```
+
+Em outro terminal:
+
+```powershell
+Set-Location 'D:\VendeMais\frontend'
+npm ci
+npm run dev -- --host localhost --port 5173 --strictPort
+```
+
+Abra `http://localhost:5173`. Para cookies locais, use `localhost`
+consistentemente, inclusive na URL da API; o processo backend deve receber
+`VENDEMAIS_ENV=development`,
+`VENDEMAIS_ALLOWED_ORIGIN=http://localhost:5173` e
+`VENDEMAIS_COOKIE_SECURE=false` **somente em desenvolvimento local**.
+
+### Endpoints e dados
+
+| Endpoint | Comportamento |
+| --- | --- |
+| `GET /health` | Público; retorna o estado da aplicação. |
+| `POST /auth/login` | Recebe a senha administrativa e retorna 204 com cookie de sessão. |
+| `POST /auth/logout` | Revoga a sessão apresentada e remove o cookie; retorna 204. |
+| `GET /api/leads` | Protegido; retorna `items`, `total`, `page` e `page_size`. |
+| `GET /api/metrics` | Protegido; retorna `leads_total`, `average_score`, `missing_score_count` e `unique_deals`. |
+
+Os endpoints de dados aceitam `start_date` e `end_date` opcionais em
+`YYYY-MM-DD`, com limites inclusivos em UTC sobre `enriched_at`. Sem filtro de
+período, registros sem data também são incluídos; com filtro, são excluídos.
+Em leads, `page` começa em 1 e `page_size` vai de 1 a 100. `deal_id` e os
+demais campos de apresentação podem ser `null`; nenhuma identificação é
+inventada. `tech_stack` é lista de textos ou `null`; texto de origem é mantido
+como um único item.
+
+O dashboard aceita pontuações numéricas finitas de 0 a 100, inclusive
+decimais. Valor ausente, booleano, texto, não finito ou fora da faixa é
+tratado como `null` e contado como ausente nas métricas. A média usa apenas
+pontuações válidas. A regra de saída solicitada ao Gemini no fluxo Make é
+separada desse contrato de leitura.
+
+### Sessões e requisitos para produção
+
+O cookie é HttpOnly e SameSite=Strict; em produção deve ser Secure. Login e
+logout exigem exatamente a origem configurada, e o CORS permite credenciais
+apenas para essa origem. Sem sessão válida, leads e métricas retornam 401; uma
+fonte de dados ausente ou indisponível retorna 503. Não registre senhas,
+cookies, corpos de login nem dados pessoais em logs da aplicação ou proxy.
+Em produção, `/docs`, `/redoc` e `/openapi.json` estão desativados; use
+`VENDEMAIS_ENV=development` apenas no ambiente local.
+
+As sessões expiram após oito horas e, junto com o limitador, existem apenas na
+memória do processo. O limite é de cinco tentativas globais por cinco minutos,
+inclusive sucessos; reinício invalida as sessões e zera a contagem. Uma
+demonstração acadêmica controlada pode usar **um worker e uma réplica**, com
+ressalvas: não há contas individuais nem MFA, e o limite global pode impedir
+usuários legítimos. Para produção, exija HTTPS, cookie Secure, origem e CORS
+restritos, origem HTTPS da API (mesma origem ou `VITE_API_BASE_URL` pública
+configurada), proteção adicional de taxa no proxy e gestão segura de
+credenciais. A compatibilidade de `SameSite` deve ser validada na topologia de
+domínios; CORS não a substitui. Mais de um
+worker/réplica exige estratégia compartilhada de sessões e limitação de taxa.
+
+**Pendente de homologação em produção:** implantação HTTPS, configuração de
+origens e cookies, proteção de taxa, gestão de segredos e validação integrada
+do dashboard no ambiente de destino. A aprovação com ressalvas da estratégia
+de sessão aplica-se somente à demonstração acadêmica controlada.
 
 ## Segurança e credenciais
 
